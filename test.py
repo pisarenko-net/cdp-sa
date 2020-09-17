@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from hifi_appliance.playback import Player
+from hifi_appliance.playback import Playback
 from hifi_appliance.display import Display
 #from hifi_appliance import db
 
@@ -11,8 +11,8 @@ daemon_config = namedtuple(
 daemon_config.user = 'sergey'
 daemon_config.group = 'sergey'
 daemon_config.initgroups = False
-daemon_config.pid_file = '/home/sergey/player.pid'
-daemon_config.log_file = '/home/sergey/player.log'
+daemon_config.pid_file = '/home/sergey/playback.pid'
+daemon_config.log_file = '/home/sergey/playback.log'
 
-#player = Player(daemon_config, debug=False)
-#display = Display(daemon_config, debug=True)
+playback = Playback(daemon_config, debug=True)
+# display = Display(daemon_config, debug=True)

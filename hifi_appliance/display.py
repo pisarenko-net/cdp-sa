@@ -19,4 +19,3 @@ class Display(Daemon):
 
     def run(self):
         self.io_loop.start()
-

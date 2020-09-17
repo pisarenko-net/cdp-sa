@@ -1,5 +1,7 @@
 from zmq.eventloop.ioloop import IOLoop
 
+from .util import keys_to_ascii
+
 
 class Receiver(object):
     """A message receiver for a channel."""
@@ -29,7 +31,8 @@ class Receiver(object):
         self.io_loop = io_loop or IOLoop.instance()
         self.channel = channel
         self.name = name
-        self._callbacks = kw_callbacks
+        callbacks = keys_to_ascii(callbacks)
+        self._callbacks = keys_to_ascii(kw_callbacks)
         self._callbacks.update(callbacks)
         self._fallback = fallback
         self._stream = channel.get_receiver_stream(
@@ -95,4 +98,3 @@ class Sender(object):
         if self._stream:
             self._stream.close(linger = linger)
             self._stream = None
-

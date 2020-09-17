@@ -7,4 +7,3 @@ def get_zmq_context():
     if _context is None:
         _context = zmq.Context()
     return _context
-

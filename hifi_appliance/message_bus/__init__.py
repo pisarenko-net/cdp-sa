@@ -5,22 +5,36 @@ from .channel import Queue, Topic
 # State changes
 state = Topic(
     name = 'state',
-    player = 'tcp://127.0.0.1:7922',
+    playback = 'tcp://127.0.0.1:7922',
     ripper = 'tcp://127.0.0.1:7923',
+    test = 'tcp://127.0.0.1:7924'
 )
 
 
 # Errors
 error = Topic(
     name = 'error',
-    player = 'tcp://127.0.0.1:7932',
+    playback = 'tcp://127.0.0.1:7932',
     ripper = 'tcp://127.0.0.1:7933',
 )
 
 
-# CD commands without any response
-cd_command = Queue(
+# Commands, open to user/OS interaction
+command = Queue(
     name = 'command',
     address = 'tcp://127.0.0.1:7942',
 )
 
+
+# Playback commands, to only be called by commander
+command_playback = Queue(
+    name = 'command_playback',
+    address = 'tcp://127.0.0.1:7943',
+)
+
+
+# Minidisc commands, to only be called by commander
+command_minidisc = Queue(
+    name = 'command_minidisc',
+    address = 'tcp://127.0.0.1:7942',
+)

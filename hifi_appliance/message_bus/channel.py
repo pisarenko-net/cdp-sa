@@ -2,6 +2,8 @@ import zmq
 from zmq.eventloop.zmqstream import ZMQStream
 
 from .context import get_zmq_context
+from .util import decode_list_to_str
+from .util import keys_to_ascii
 
 
 class UndefinedSenderError(Exception):
@@ -44,7 +46,7 @@ class Topic(Channel):
         event starts with the same sequence of characters.
         """
         self.name = name.encode('ascii')
-        self._pub_addresses = {sender_name.encode('ascii'):address for (sender_name, address) in pub_addresses.items()}
+        self._pub_addresses = keys_to_ascii(pub_addresses)
 
     def __str__(self):
         return '<Topic {0} on {1}>'.format(
@@ -84,9 +86,12 @@ class Topic(Channel):
     def dispatch_message(self, stream, callbacks, fallback, receiver, msg_parts):
         """Send messages to all the callbacks matching a prefix of the message name.
         """
-        msg_name = msg_parts[0]
-        for sub, func in callbacks.iteritems():
-            if msg_name.startswith(sub):
+
+        decoded_msg_parts = decode_list_to_str(msg_parts)
+        msg_name = decoded_msg_parts[0]
+
+        for sub, func in callbacks.items():
+            if msg_name.startswith(sub.decode('ascii')):
                 fallback = None
                 func(receiver, msg_parts)
 
@@ -129,4 +134,3 @@ class Queue(Channel):
         func = callbacks.get(msg_parts[0], fallback)
         if func:
             func(receiver, msg_parts)
-
