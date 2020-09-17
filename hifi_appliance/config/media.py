@@ -1,0 +1,1 @@
+MUSIC_PATH_NAME = '/mnt/music'
