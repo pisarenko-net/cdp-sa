@@ -121,3 +121,13 @@ class PlaybackNewDiscTestCase(unittest.TestCase):
 		self.assertIs(self.player.disc_meta, _DISC_META)
 
 		self.assertEqual(self.player.state, PlayerStates.STOPPED)
+
+	def test_non_audio_cd_fails(self):
+		self.read_disc_func = MagicMock(return_value=None)
+		self.player = self._create_mocked_player()
+
+		self.assertTrue(self.player.init())
+
+		self.assertTrue(self.player.read_disc())
+
+		self.assertEqual(self.player.state, PlayerStates.UNKNOWN_DISC)

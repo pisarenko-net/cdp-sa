@@ -1,1 +1,1 @@
-DEVICE = '/dev/sr0'
+CD_DEVICE = '/dev/sr0'

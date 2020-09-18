@@ -1,0 +1,1 @@
+from .disc import read_disc_id

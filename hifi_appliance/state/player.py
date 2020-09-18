@@ -72,6 +72,9 @@ class Player(object):
 	def read_disc_id(self):
 		self.disc_id = self.read_disc_id_func()
 
+	def has_disc_id(self):
+		return self.disc_id is not None
+
 	def check_disc_in_db(self):
 		self.in_db = self.check_disc_db_func()
 
@@ -167,7 +170,19 @@ def create_player(
 
 	#
 	# Disc identification
-	machine.add_transition(Triggers.READ_DISC, States.NO_DISC, States.DISC_ID, before='read_disc_id')
+	machine.add_transition(
+		Triggers.READ_DISC,
+		States.NO_DISC,
+		States.DISC_ID,
+		conditions='has_disc_id',
+		prepare='read_disc_id'
+	)
+	machine.add_transition(
+		Triggers.READ_DISC,
+		States.NO_DISC,
+		States.UNKNOWN_DISC,
+		unless='has_disc_id'
+	)
 	machine.add_transition(Triggers.CHECK_DISC, States.DISC_ID, States.LOOK_UP, before='check_disc_in_db')
 	machine.add_transition(
 		Triggers.QUERY_DISC,
