@@ -11,6 +11,7 @@ The goal is to build a custom Hi-Fi appliance in a Sony chassis with a CD transp
  - relevant context is always passed along with a message
  - driven by state transitions
  - resilient to lost messages (not sure)
+ - well-defined states and transitions
 
 ## Major modules
 
