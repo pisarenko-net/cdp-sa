@@ -1,0 +1,190 @@
+CD_DA
+
+CD_TEXT {
+  LANGUAGE_MAP {
+    0: 9
+  }
+  LANGUAGE 0 {
+    TITLE "The Division Bell"
+    PERFORMER "Pink Floyd"
+    UPC_EAN ""
+    SIZE_INFO { 0,  1, 11,  0, 17, 11,  0,  0,  0,  0,  0,  0,
+                0,  0,  0,  0,  0,  0, 12,  3, 42,  0,  0,  0,
+                0,  0,  0,  0,  9,  0,  0,  0,  0,  0,  0,  0}
+  }
+}
+
+// Track 1
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100012"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Cluster One"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100012"
+  }
+}
+FILE "data.wav" 0 05:56:57
+
+
+// Track 2
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100013"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "What Do You Want From Me"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100013"
+  }
+}
+FILE "data.wav" 05:56:57 04:21:45
+
+
+// Track 3
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100014"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Poles Apart"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100014"
+  }
+}
+FILE "data.wav" 10:18:27 07:03:52
+
+
+// Track 4
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100015"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Marooned"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100015"
+  }
+}
+FILE "data.wav" 17:22:04 05:29:54
+
+
+// Track 5
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100016"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "A Great Day For Freedom"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100016"
+  }
+}
+FILE "data.wav" 22:51:58 04:17:17
+
+
+// Track 6
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100017"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Wearing The Inside Out"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100017"
+  }
+}
+FILE "data.wav" 27:09:00 06:49:01
+
+
+// Track 7
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100018"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Take It Back"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100018"
+  }
+}
+FILE "data.wav" 33:58:01 06:12:24
+
+
+// Track 8
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100019"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Coming Back To Life"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100019"
+  }
+}
+FILE "data.wav" 40:10:25 06:19:11
+
+
+// Track 9
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Keep Talking"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100020"
+  }
+}
+FILE "data.wav" 46:29:36 06:10:50
+
+
+// Track 10
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100021"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "Lost For Words"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100021"
+  }
+}
+FILE "data.wav" 52:40:11 05:13:13
+
+
+// Track 11
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+ISRC "GBN9X1100022"
+CD_TEXT {
+  LANGUAGE 0 {
+    TITLE "High Hopes"
+    PERFORMER "Pink Floyd"
+    ISRC "GBN9X1100022"
+  }
+}
+FILE "data.wav" 57:53:24 08:34:23
+
