@@ -14,7 +14,7 @@ The goal is to build a custom Hi-Fi appliance in a Sony chassis with a CD transp
 
 ## Major modules
 
-Modules interact with each other via ZMQ topics. There two topics: `state` (state updates for all modules) and `command`.
+Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUSH/PULL "queues" (many-to-one). There are two topics: `state` (state updates for all modules) and `error` (errors displayed to the user). There is one `command` queue for all control input.
 
  - playback -- controls playback and CD state transitions
  - ripper -- controls ripping process and its state transitions
@@ -30,7 +30,9 @@ Modules interact with each other via ZMQ topics. There two topics: `state` (stat
 ## Dependencies
 
  - python-zmq
+ - python-daemon
  - python-tornado
+ - pytransitions
 
 ## Attribution
 
