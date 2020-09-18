@@ -6,11 +6,11 @@ The goal is to build a custom Hi-Fi appliance in a Sony chassis with a CD transp
 
 ## Design principles
 
- - small independent modules exchanging messages over a message queue
+ - small independent modules exchanging messages over ZMQ
  - stateless (with allowance for caching)
  - relevant context is always passed along with a message
  - driven by state transitions
- - resilient to lost messages
+ - resilient to lost messages (not sure)
 
 ## Major modules
 
