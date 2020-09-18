@@ -30,10 +30,11 @@ Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUS
 
 ## Dependencies
 
- - python-zmq
+ - zmq
  - python-daemon
- - python-tornado
+ - tornado
  - pytransitions
+ - musicbrainzngs
 
 ## Attribution
 

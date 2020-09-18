@@ -6,10 +6,6 @@ class TOCError(Exception):
 
 
 class Toc(object):
-    # Confusingly, the CD format has it's own definition of frame.  There
-    # are 75 CD frames per second, each consisting of 588 audio frames.
-    PCM_FRAMES_PER_CD_FRAME = 588
-
     def __init__(self, toc):
         self.toc = toc
         self.disc_meta = self._parse_toc()
@@ -65,33 +61,13 @@ class Toc(object):
 
             # Pick up the offsets within the data file
             elif line.startswith('FILE '):
-                p = line.split()
-
-                # Just assume the last two are either 0 or an MSF
-                if len(p) < 4:
-                    raise TOCError('missing offsets in file: %s' % line)
-
-                offset = p[-2]
-                length = p[-1]
-
-                if offset == '0':
-                    track['file_offset'] = 0
-                else:
-                    try:
-                        track['file_offset'] = self._msf_to_frames(offset)
-                    except ValueError:
-                        raise TOCError('bad offset for file: %s' % line)
-
-                try:
-                    track['file_length'] = self._msf_to_frames(length)
-                except ValueError:
-                    raise TOCError('bad length for file: %s' % line)
+                pass
 
             elif line.startswith('SILENCE '):
-                track['pregap_silence'] = self._get_toc_msf_arg(line)
+                pass
 
             elif line.startswith('START '):
-                track['pregap_offset'] = self._get_toc_msf_arg(line)
+                pass
 
             elif line.startswith('INDEX '):
                 pass
@@ -139,19 +115,6 @@ class Toc(object):
             return self._msf_to_frames(p[1])
         except ValueError:
             raise TOCError('bad MSF in line: %s' % line)
-
-    def _msf_to_frames(self, msf):
-        """Translate an MM:SS:FF to number of PCM audio frames."""
-
-        d = msf.split(':')
-        if len(d) != 3:
-            raise ValueError(msf)
-
-        m = int(d[0], 10)
-        s = int(d[1], 10)
-        f = int(d[2], 10)
-
-        return (((m * 60) + s) * 75 + f) * Toc.PCM_FRAMES_PER_CD_FRAME
 
 
 class CDText(object):
