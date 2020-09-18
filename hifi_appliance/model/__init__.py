@@ -1,2 +1,3 @@
+from .command import Command
 from .disc import Disc
-from .track import Track
+from .track import PlaybackInstance, Track
