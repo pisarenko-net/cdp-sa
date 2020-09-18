@@ -15,6 +15,21 @@ class States(Enum):
 	WAITING_FOR_DATA = 8
 
 
+class Triggers(object):
+	INIT = 'init'
+	READ_DISC = 'read_disc'
+	CHECK_DISC = 'check_disc'
+	QUERY_DISC = 'query_disc'
+	PLAY = 'play'
+	PLAYING = 'playing'
+	STOP = 'stop'
+	PAUSE = 'pause'
+	NEXT = 'next'
+	PREV = 'prev'
+	RIPPER_TICK = 'ripper_tick'
+	EJECT = 'eject'
+
+
 class Player(object):
 	"""
 	Encapsulate state entire
@@ -25,26 +40,27 @@ class Player(object):
 		check_disc_db_func,
 		get_disc_meta_db_func,
 		get_disc_meta_online_func,
+		eject_func,
 		begin_playback_callback,
 		stop_playback_callback,
 		pause_playback_callback,
-		eject_func
 	):
 
 		self.read_disc_id_func = read_disc_id_func
 		self.check_disc_db_func = check_disc_db_func
 		self.get_disc_meta_db_func = get_disc_meta_db_func
 		self.get_disc_meta_online_func = get_disc_meta_online_func
+		self.eject_func = eject_func
+
 		self.begin_playback_callback = begin_playback_callback
 		self.stop_playback_callback = stop_playback_callback
 		self.pause_playback_callback = pause_playback_callback
-		self.eject_func = eject_func
 
 		self.clear_internal_state()
 
 	def clear_internal_state(self):
 		self.disc_id = None
-		self.in_db = False
+		self.in_db = None
 		self.disc_entry = None
 		self.disc_meta = None
 
@@ -54,10 +70,10 @@ class Player(object):
 		self.current_frame = None
 
 	def read_disc_id(self):
-		self.disc_id = self.check_disc_db_func()
+		self.disc_id = self.read_disc_id_func()
 
 	def check_disc_in_db(self):
-		self.in_db = self.disc_db_check_func()
+		self.in_db = self.check_disc_db_func()
 
 	def is_disc_in_db(self):
 		return self.in_db
@@ -121,16 +137,20 @@ class Player(object):
 	def update_position(self, frame=None):
 		self.current_frame = frame
 
+	def update_disc_entry(self, disc_entry=None):
+		if disc_entry:
+			self.disc_entry = disc_entry
+
 
 def create_player(
 	read_disc_id_func,
 	check_disc_db_func,
 	get_disc_meta_db_func,
 	get_disc_meta_online_func,
+	eject_func,
 	begin_playback_callback,
 	stop_playback_callback,
 	pause_playback_callback,
-	eject_func
 ):
 
 	player = Player(
@@ -147,44 +167,50 @@ def create_player(
 
 	#
 	# Disc identification
-	machine.add_transition('read_disc', States.NO_DISC, States.DISC_ID, before='read_disc_id')
-	machine.add_transition('check_disc', States.DISC_ID, States.LOOK_UP, before='check_disc_in_db')
-	machine.add_transition('query_disc', States.LOOK_UP, States.STOPPED, conditions='is_disc_in_db', before='get_disc_meta_db')
+	machine.add_transition(Triggers.READ_DISC, States.NO_DISC, States.DISC_ID, before='read_disc_id')
+	machine.add_transition(Triggers.CHECK_DISC, States.DISC_ID, States.LOOK_UP, before='check_disc_in_db')
 	machine.add_transition(
-		'query_disc',
+		Triggers.QUERY_DISC,
 		States.LOOK_UP,
 		States.STOPPED,
-		unless=['is_disc_in_db', 'is_no_disc_meta'],
+		conditions='is_disc_in_db',
+		before='get_disc_meta_db'
+	)
+	machine.add_transition(
+		Triggers.QUERY_DISC,
+		States.LOOK_UP,
+		States.STOPPED,
+		unless='is_no_disc_meta',
 		prepare='get_disc_meta_online'
 	)
-	machine.add_transition('query_disc', States.LOOK_UP, States.UNKNOWN_DISC, conditions='is_no_disc_meta')
+	machine.add_transition(Triggers.QUERY_DISC, States.LOOK_UP, States.UNKNOWN_DISC, conditions='is_no_disc_meta')
 
 	#
 	# Disc playback
 	machine.add_transition(
-		'play',
+		Triggers.PLAY,
 		States.STOPPED,
 		States.WAITING_FOR_DATA,
 		unless='is_flac_available',
 		prepare=['set_track_number', 'find_flac']
 	)
 	machine.add_transition(
-		'play',
+		Triggers.PLAY,
 		States.STOPPED,
 		States.PLAYING,
 		conditions='is_flac_available',
 		prepare='set_track_number',
 		before='begin_playback'
 	)
-	machine.add_transition('play', States.PAUSED, States.PLAYING, before='resume_playback')
-	machine.add_transition('playing', States.PLAYING, before='update_position')
-	machine.add_transition('stop', States.PLAYING, States.STOPPED, before='stop_playback')
-	machine.add_transition('pause', States.PLAYING, States.PAUSED, before='pause_playback')
+	machine.add_transition(Triggers.PLAY, States.PAUSED, States.PLAYING, before='resume_playback')
+	machine.add_transition(Triggers.PLAYING, States.PLAYING, States.PLAYING, before='update_position')
+	machine.add_transition(Triggers.STOP, States.PLAYING, States.STOPPED, before='stop_playback')
+	machine.add_transition(Triggers.PAUSE, States.PLAYING, States.PAUSED, before='pause_playback')
 
 	#
 	# Track switching
 	machine.add_transition(
-		'prev',
+		Triggers.PREV,
 		[States.PLAYING, States.WAITING_FOR_DATA],
 		States.PLAYING,
 		conditions=['has_prev_track', 'is_flac_available'],
@@ -192,7 +218,7 @@ def create_player(
 		before='prev_track'
 	)
 	machine.add_transition(
-		'next',
+		Triggers.NEXT,
 		[States.PLAYING, States.WAITING_FOR_DATA],
 		States.PLAYING,
 		conditions=['has_next_track', 'is_flac_available'],
@@ -200,7 +226,7 @@ def create_player(
 		before='next_track'
 	)
 	machine.add_transition(
-		'next',
+		Triggers.NEXT,
 		States.PLAYING,
 		States.WAITING_FOR_DATA,
 		conditions='has_next_track',
@@ -208,7 +234,7 @@ def create_player(
 		before='stop_playback'
 	)
 	machine.add_transition(
-		'prev',
+		Triggers.PREV,
 		States.PLAYING,
 		States.WAITING_FOR_DATA,
 		conditions='has_prev_track',
@@ -219,17 +245,18 @@ def create_player(
 	#
 	# Ripper interaction
 	machine.add_transition(
-		'ripper_tick',
+		Triggers.RIPPER_TICK,
 		States.WAITING_FOR_DATA,
 		States.PLAYING,
 		conditions='is_flac_available',
+		prepare='update_disc_entry',
 		before='begin_playback'
 	)
 
 	#
 	# Eject
-	machine.add_transition('eject', '*', States.NO_DISC, before=['stop_playback', 'clear_internal_state'])
+	machine.add_transition(Triggers.EJECT, '*', States.NO_DISC, before=['stop_playback', 'clear_internal_state'])
 
-	machine.add_transition('init', States.INIT, States.NO_DISC)
+	machine.add_transition(Triggers.INIT, States.INIT, States.NO_DISC)
 
 	return player
