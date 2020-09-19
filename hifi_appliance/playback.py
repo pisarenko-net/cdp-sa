@@ -8,21 +8,12 @@ from .message_bus import Sender
 from .message_bus import command_playback as command_queue
 from .message_bus import error as topic_error
 from .message_bus import state as topic_state
-
-
-STATE_INIT = 'PLAYBACK_INIT'
-STATE_NO_DISC = 'PLAYBACK_NO_DISC'
-STATE_ANALYZING = 'PLAYBACK_ANALYZING'
-STATE_UNKNOWN_DISC = 'PLAYBACK_UNKNOWN_DISC'
-STATE_STOPPED = 'PLAYBACK_STOPPED'
-STATE_PLAYING = 'PLAYBACK_PLAYING'
-STATE_PAUSED = 'PLAYBACK_PAUSED'
-STATE_WAITING_FOR_DATA = 'PLAYBACK_WAITING_FOR_DATA'
+from .state import create_player
 
 
 class Playback(Daemon):
     def __init__(self, daemon_config, debug=False):
-        self.state = STATE_INIT
+        self.state_machine = create_player()
         super(Playback, self).__init__(daemon_config, debug)
         self.db = track_db
 
@@ -74,9 +65,6 @@ class Playback(Daemon):
         return 'test'
 
     def run(self):
-        self.state = STATE_NO_DISC
-        # TODO: check if there's a CD (CD player turned on with CD inside)
-
         # message_bus_thread = threading.Thread(
         #     target=self._generate_messages,
         #     name='message generator'
