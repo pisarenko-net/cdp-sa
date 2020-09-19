@@ -1,6 +1,4 @@
 import sys
 
-from .musicbrainz import MusicbrainzLookup
-
-
-sys.modules[__name__] = MusicbrainzLookup()
+from .musicbrainz import MusicbrainzLookup as RemoteMeta
+from .mutagen import MutagenTagReader as LocalMeta

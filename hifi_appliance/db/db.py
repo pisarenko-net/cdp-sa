@@ -32,11 +32,11 @@ class TrackDB(object):
     def has_disc(self, disc_id):
         return self._db.exists(disc_id)
 
-    def get_disc(self, disc_id):
+    def get_track_list(self, disc_id):
         return self._db.get(disc_id)
 
-    def store_disc(self, disc_id, disc_info):
-        self._db.set(disc_id, disc_info)
+    def store_track_list(self, disc_id, track_files):
+        self._db.set(disc_id, track_files)
 
     def persist(self):
         with self._lock:
@@ -47,9 +47,9 @@ class TrackDB(object):
         for root, _, files in os.walk(MUSIC_PATH_NAME):
             if '.disc_id' in files:
                 disc_id = Path(root).joinpath('.disc_id').read_text().replace('\n', '')
-                track_list = sorted([str(Path(root).joinpath(file)) for file in files if _TRACK_REGEX.match(file)])
+                track_files = sorted([str(Path(root).joinpath(file)) for file in files if _TRACK_REGEX.match(file)])
                 discs[disc_id] = {
-                    'tracks': track_list
+                    'track_files': track_files
                 }
 
         with self._lock:

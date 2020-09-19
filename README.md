@@ -34,6 +34,7 @@ Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUS
  - tornado
  - pytransitions
  - musicbrainzngs
+ - mutagen
  - pyyaml
 
 ## Attribution

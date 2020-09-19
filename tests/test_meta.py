@@ -1,3 +1,4 @@
+from collections import namedtuple
 import json
 import os
 from pathlib import Path
@@ -5,18 +6,21 @@ import unittest
 from unittest.mock import patch
 
 import musicbrainzngs
+import mutagen
 
-from hifi_appliance import meta
+from hifi_appliance.meta import LocalMeta
+from hifi_appliance.meta import RemoteMeta
 
 
 class MusicbrainzTestCase(unittest.TestCase):
     def setUp(self):
+        self.client = RemoteMeta()
         patch('musicbrainzngs.set_useragent').start()
         patch('musicbrainzngs.auth').start()
 
     def test_response_error(self):
         with patch('musicbrainzngs.get_releases_by_discid', side_effect=musicbrainzngs.musicbrainz.ResponseError()):
-            self.assertEqual(meta.query('disc_id'), None)
+            self.assertEqual(self.client.query('disc_id'), None)
 
     def test_cd_01(self):
         response = json.loads(
@@ -24,7 +28,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('fGn7CK2HfkKOYybwXNlbA6KkQoo-')
+            disc_meta = self.client.query('fGn7CK2HfkKOYybwXNlbA6KkQoo-')
 
             self.assertEqual(disc_meta['disc_id'], 'fGn7CK2HfkKOYybwXNlbA6KkQoo-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -40,7 +44,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('J9495l1WqKuqHW._xsMJls1BeJ0-')
+            disc_meta = self.client.query('J9495l1WqKuqHW._xsMJls1BeJ0-')
 
             self.assertEqual(disc_meta['disc_id'], 'J9495l1WqKuqHW._xsMJls1BeJ0-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -57,7 +61,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('XQAh463sZzABy4NyOQrb2q1_G6Y-')
+            disc_meta = self.client.query('XQAh463sZzABy4NyOQrb2q1_G6Y-')
 
             self.assertEqual(disc_meta['disc_id'], 'XQAh463sZzABy4NyOQrb2q1_G6Y-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -74,7 +78,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('JMAWOlcW89_vd9xIRoo3ty49jkA-')
+            disc_meta = self.client.query('JMAWOlcW89_vd9xIRoo3ty49jkA-')
 
             self.assertEqual(disc_meta['disc_id'], 'JMAWOlcW89_vd9xIRoo3ty49jkA-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -91,7 +95,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('pmwbQHX3o4xA_NeZUHG_52.6wxY-')
+            disc_meta = self.client.query('pmwbQHX3o4xA_NeZUHG_52.6wxY-')
 
             self.assertEqual(disc_meta['disc_id'], 'pmwbQHX3o4xA_NeZUHG_52.6wxY-')
             self.assertEqual(disc_meta['cd'], 2)
@@ -108,7 +112,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('VYyHlY0Pj.OzVIZ2O08uuzsFOdw-')
+            disc_meta = self.client.query('VYyHlY0Pj.OzVIZ2O08uuzsFOdw-')
             expected_artists = [
                 'Space',
                 'Cerrone',
@@ -143,7 +147,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('59h_gD9RVcuGFjIHwU62mQ243y8-')
+            disc_meta = self.client.query('59h_gD9RVcuGFjIHwU62mQ243y8-')
 
             self.assertEqual(disc_meta['disc_id'], '59h_gD9RVcuGFjIHwU62mQ243y8-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -160,7 +164,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('ArJP04VIOxEmbWb1V8zjhapCxQw-')
+            disc_meta = self.client.query('ArJP04VIOxEmbWb1V8zjhapCxQw-')
 
             self.assertEqual(disc_meta['disc_id'], 'ArJP04VIOxEmbWb1V8zjhapCxQw-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -177,7 +181,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         )
 
         with patch('musicbrainzngs.get_releases_by_discid', return_value=response) as mock_method:
-            disc_meta = meta.query('JI1DFDN5AAXBSqTT7Q2hvnMHpS0-')
+            disc_meta = self.client.query('JI1DFDN5AAXBSqTT7Q2hvnMHpS0-')
 
             self.assertEqual(disc_meta['disc_id'], 'JI1DFDN5AAXBSqTT7Q2hvnMHpS0-')
             self.assertEqual(disc_meta['cd'], 1)
@@ -187,3 +191,23 @@ class MusicbrainzTestCase(unittest.TestCase):
             self.assertEqual(len(disc_meta['tracks']), 17)
             for track in disc_meta['tracks']:
                 self.assertEqual(track['artist'], 'Queen')
+
+
+class MutagenTestCase(unittest.TestCase):
+    @patch('mutagen.File')
+    def test_one_track(self, file_mock):
+        track_files = ['fake1.flac']
+        disc_id = 'disc_id'
+
+        d = {'artist': ['Hokus'], 'title': ['Pokus'], 'album': 'Krokus'}
+        file_mock.return_value.info.total_samples = 123442
+        file_mock.return_value.__getitem__.side_effect = d.__getitem__
+
+        client = LocalMeta()
+        disc_meta = client.query(disc_id, track_files)
+
+        self.assertEqual(disc_meta['disc_id'], disc_id)
+        self.assertEqual(disc_meta['duration'], 123442)
+        self.assertEqual(disc_meta['title'], 'Krokus')
+        self.assertEqual(disc_meta['tracks'][0]['artist'], 'Hokus')
+        self.assertEqual(disc_meta['tracks'][0]['title'], 'Pokus')
