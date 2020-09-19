@@ -31,6 +31,7 @@ class DiscMetaTestCase(unittest.TestCase):
 
 		self.assertEqual(len(disc_meta['tracks']), 29)
 		self.assertRegex(disc_meta['title'], r'^Unknown Album.*$')
+		self.assertEqual(disc_meta['duration'], 197067024)
 
 		for track in disc_meta['tracks']:
 			self.assertEqual(track['title'], 'Unknown Title')
@@ -43,6 +44,7 @@ class DiscMetaTestCase(unittest.TestCase):
 
 		self.assertEqual(len(disc_meta['tracks']), 11)
 		self.assertEqual(disc_meta['title'], 'The Division Bell')
+		self.assertEqual(disc_meta['duration'], 175854336)
 
 		for track in disc_meta['tracks']:
 			self.assertNotEqual(track['title'], 'Unknown Track')

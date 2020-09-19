@@ -1,5 +1,7 @@
 import re
 
+from ..constants import PCM_FRAMES_PER_CD_FRAME
+
 
 class TOCError(Exception):
     pass
@@ -61,13 +63,33 @@ class Toc(object):
 
             # Pick up the offsets within the data file
             elif line.startswith('FILE '):
-                pass
+                p = line.split()
+
+                # Just assume the last two are either 0 or an MSF
+                if len(p) < 4:
+                    raise TOCError('missing offsets in file: %s' % line)
+
+                offset = p[-2]
+                length = p[-1]
+
+                if offset == '0':
+                    track['file_offset'] = 0
+                else:
+                    try:
+                        track['file_offset'] = self._msf_to_frames(offset)
+                    except ValueError:
+                        raise TOCError('bad offset for file: %s' % line)
+
+                try:
+                    track['file_length'] = self._msf_to_frames(length)
+                except ValueError:
+                    raise TOCError('bad length for file: %s' % line)
 
             elif line.startswith('SILENCE '):
-                pass
+                track['pregap_silence'] = self._get_toc_msf_arg(line)
 
             elif line.startswith('START '):
-                pass
+                track['pregap_offset'] = self._get_toc_msf_arg(line)
 
             elif line.startswith('INDEX '):
                 pass
@@ -115,6 +137,19 @@ class Toc(object):
             return self._msf_to_frames(p[1])
         except ValueError:
             raise TOCError('bad MSF in line: %s' % line)
+
+    def _msf_to_frames(self, msf):
+        """Translate an MM:SS:FF to number of PCM audio frames."""
+
+        d = msf.split(':')
+        if len(d) != 3:
+            raise ValueError(msf)
+
+        m = int(d[0], 10)
+        s = int(d[1], 10)
+        f = int(d[2], 10)
+
+        return (((m * 60) + s) * 75 + f) * PCM_FRAMES_PER_CD_FRAME
 
 
 class CDText(object):
