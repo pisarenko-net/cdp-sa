@@ -23,7 +23,7 @@ def _read_toc_into_file(toc_filepath):
         try:
             subprocess.call(['cdrdao', 'read-toc', '--fast-toc', toc_filepath], stdout=dev_null, stderr=dev_null)
         except subprocess.CalledProcessError as e:
-            return None
+            pass
 
 
 def _convert_track_info(toc_track_info):
@@ -51,12 +51,15 @@ def read_disc_meta(disc_id, toc_filepath=tempfile.NamedTemporaryFile().name):
             disc_meta['title'] = 'Unknown Album %s' % ''.join(x.capitalize() for x in generate())
 
         tracks = [_convert_track_info(track) for track in disc_meta['tracks']]
-        duration = sum([track['duration'] for track in tracks])
+        duration = sum(track['duration'] for track in tracks)
+
         return {
             'disc_id': disc_id,
             'title': disc_meta['title'],
             'tracks': tracks,
-            'duration': duration
+            'duration': duration,
+            'cd': 1,
+            'total_cds': 1
         }
     except TOCError:
         return None

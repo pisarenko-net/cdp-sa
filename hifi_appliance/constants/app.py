@@ -1,0 +1,1 @@
+CONFIG_PATH_NAME = '/etc/cdp-sa.yaml'

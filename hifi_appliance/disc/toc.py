@@ -1,15 +1,13 @@
 import re
 
+from ..constants import PCM_FRAMES_PER_CD_FRAME
+
 
 class TOCError(Exception):
     pass
 
 
 class Toc(object):
-    # Confusingly, the CD format has it's own definition of frame.  There
-    # are 75 CD frames per second, each consisting of 588 audio frames.
-    PCM_FRAMES_PER_CD_FRAME = 588
-
     def __init__(self, toc):
         self.toc = toc
         self.disc_meta = self._parse_toc()
@@ -151,7 +149,7 @@ class Toc(object):
         s = int(d[1], 10)
         f = int(d[2], 10)
 
-        return (((m * 60) + s) * 75 + f) * Toc.PCM_FRAMES_PER_CD_FRAME
+        return (((m * 60) + s) * 75 + f) * PCM_FRAMES_PER_CD_FRAME
 
 
 class CDText(object):

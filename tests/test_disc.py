@@ -26,11 +26,12 @@ class DiscIdTestCase(unittest.TestCase):
 class DiscMetaTestCase(unittest.TestCase):
 	@patch('hifi_appliance.disc.disc._read_toc_into_file')
 	def test_no_cdtext(self, mocked_read_toc):
-		toc_path = os.path.join(os.path.dirname(__file__), 'data', 'toc_notext')
+		toc_path = os.path.join(os.path.dirname(__file__), 'data', 'toc', 'notext')
 		disc_meta = read_disc_meta('disc_id', str(toc_path))
 
 		self.assertEqual(len(disc_meta['tracks']), 29)
 		self.assertRegex(disc_meta['title'], r'^Unknown Album.*$')
+		self.assertEqual(disc_meta['duration'], 197067024)
 
 		for track in disc_meta['tracks']:
 			self.assertEqual(track['title'], 'Unknown Title')
@@ -38,11 +39,12 @@ class DiscMetaTestCase(unittest.TestCase):
 
 	@patch('hifi_appliance.disc.disc._read_toc_into_file')
 	def test_cdtext(self, mocked_read_toc):
-		toc_path = os.path.join(os.path.dirname(__file__), 'data', 'toc_cdtext')
+		toc_path = os.path.join(os.path.dirname(__file__), 'data', 'toc', 'cdtext')
 		disc_meta = read_disc_meta('disc_id', str(toc_path))
 
 		self.assertEqual(len(disc_meta['tracks']), 11)
 		self.assertEqual(disc_meta['title'], 'The Division Bell')
+		self.assertEqual(disc_meta['duration'], 175854336)
 
 		for track in disc_meta['tracks']:
 			self.assertNotEqual(track['title'], 'Unknown Track')
@@ -50,7 +52,7 @@ class DiscMetaTestCase(unittest.TestCase):
 
 	@patch('hifi_appliance.disc.disc._read_toc_into_file')
 	def test_toc_error(self, mocked_read_toc):
-		toc_path = os.path.join(os.path.dirname(__file__), 'data', 'toc_cdtext')
+		toc_path = os.path.join(os.path.dirname(__file__), 'data', 'toc', 'cdtext')
 		with patch.object(Toc, '__init__', side_effect=TOCError()) as mock_method:
 			disc_meta = read_disc_meta('disc_id', str(toc_path))
 			self.assertEqual(None, disc_meta)

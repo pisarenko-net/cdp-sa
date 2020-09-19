@@ -1,6 +1,6 @@
-# hifi-appliance
+# cdp-sa
 
-The goal is to build a custom Hi-Fi appliance in a Sony chassis with a CD transport and additional custom features, such as an interface to NetMD Minidisc devices. This is similar to many other DIY network streamers. A commercial example of this is https://www.brennan.co.uk/.
+The goal is to build a custom Hi-Fi appliance in a ~~Sony~~custom chassis with a CD transport and additional custom features, such as an interface to NetMD Minidisc devices. This is similar to many other DIY network streamers. A commercial example of this is https://www.brennan.co.uk/.
 
 *This is work in progress and does not function yet* (to be removed when no longer true).
 
@@ -27,19 +27,23 @@ Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUS
  - md\_selector -- chooses a playlist to download given what's in the queue
  - md\_download -- downloads tracks to the NetMD device
 
-
 ## Dependencies
 
- - python-zmq
+ - zmq
  - python-daemon
- - python-tornado
+ - tornado
  - pytransitions
+ - musicbrainzngs
+ - pyyaml
 
 ## Attribution
 
 I'm reusing other people's work in here.
- - [codplayer](https://github.com/petli/codplayer) -- does almost exactly what I'm doing here. I've borrowed the ZMQ code and quite a few ideas.
+ - [codplayer](https://github.com/petli/codplayer) -- does almost exactly what I'm doing here. I've borrowed the ZMQ code, cdrdao TOC parsing code and lots of ideas.
 
+## Configuration
+
+Every setting defined in the `config` module can be overriden from the `/etc/cdp-sa.yaml` file.
 
 ## License
 
