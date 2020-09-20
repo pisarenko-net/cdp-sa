@@ -91,7 +91,7 @@ class Topic(Channel):
         msg_name = decoded_msg_parts[0]
 
         for sub, func in callbacks.items():
-            if msg_name.startswith(sub.decode('ascii')):
+            if msg_name.startswith(sub.decode('ascii')) and func:
                 fallback = None
                 func(receiver, msg_parts)
 

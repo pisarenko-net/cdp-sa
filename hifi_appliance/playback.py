@@ -13,7 +13,7 @@ from .state import create_player
 
 class Playback(Daemon):
     def __init__(self, daemon_config, debug=False):
-        self.state_machine = create_player()
+        # self.state_machine = create_player()
         super(Playback, self).__init__(daemon_config, debug)
         self.db = track_db
 
