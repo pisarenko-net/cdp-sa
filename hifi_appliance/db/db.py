@@ -33,7 +33,7 @@ class TrackDB(object):
         return self._db.exists(disc_id)
 
     def get_track_list(self, disc_id):
-        return self._db.get(disc_id)
+        return self._db.get(disc_id)['track_files']
 
     def store_track_list(self, disc_id, track_files):
         self._db.set(disc_id, track_files)
@@ -55,7 +55,7 @@ class TrackDB(object):
         with self._lock:
             self._db.deldb()
             for disc_id in discs:
-                self.store_disc(disc_id, discs[disc_id])
+                self.store_track_list(disc_id, discs[disc_id])
             self._db.dump()
 
     def _rebuild_loop(self):

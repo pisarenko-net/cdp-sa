@@ -1,9 +1,11 @@
 import musicbrainzngs
+from retrying import retry
 
 from ..constants import SAMPLE_RATE
 
 
 class MusicbrainzLookup(object):
+    @retry(stop_max_attempt_number=5, wait_exponential_multiplier=100)
     def query(self, disc_id):
         musicbrainzngs.set_useragent('cdp-sa', '0.0.1')
         musicbrainzngs.auth('', '')

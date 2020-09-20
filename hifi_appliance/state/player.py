@@ -38,36 +38,38 @@ class Player(object):
 		self,
 		read_disc_id_func,
 		check_disc_db_func,
-		get_disc_meta_db_func,
-		get_disc_meta_online_func,
-		eject_func,
+		get_known_disc_func,
+		get_new_disc_func,
 		begin_playback_callback,
 		stop_playback_callback,
 		pause_playback_callback,
+		resume_playback_callback,
+		after_state_change_callback
 	):
 
 		self.read_disc_id_func = read_disc_id_func
 		self.check_disc_db_func = check_disc_db_func
-		self.get_disc_meta_db_func = get_disc_meta_db_func
-		self.get_disc_meta_online_func = get_disc_meta_online_func
-		self.eject_func = eject_func
+		self.get_known_disc_func = get_known_disc_func
+		self.get_new_disc_func = get_new_disc_func
 
 		self.begin_playback_callback = begin_playback_callback
 		self.stop_playback_callback = stop_playback_callback
 		self.pause_playback_callback = pause_playback_callback
+		self.resume_playback_callback = resume_playback_callback
+		self.after_state_change_callback = after_state_change_callback
 
 		self.clear_internal_state()
 
 	def clear_internal_state(self):
 		self.disc_id = None
 		self.in_db = None
-		self.disc_entry = None
+		self.track_list = None
 		self.disc_meta = None
 
-		self.is_flac_available = None
 		self.queued_track = None
 		self.current_track = None
 		self.current_frame = None
+		self.total_frames = None
 
 	def read_disc_id(self):
 		self.disc_id = self.read_disc_id_func()
@@ -76,16 +78,16 @@ class Player(object):
 		return self.disc_id is not None
 
 	def check_disc_in_db(self):
-		self.in_db = self.check_disc_db_func()
+		self.in_db = self.check_disc_db_func(self.disc_id)
 
 	def is_disc_in_db(self):
 		return self.in_db
 
 	def get_disc_meta_db(self):
-		(self.disc_entry, self.disc_meta) = self.get_disc_meta_db_func(self.disc_id)
+		(self.track_list, self.disc_meta) = self.get_known_disc_func(self.disc_id)
 
 	def get_disc_meta_online(self):
-		(self.disc_entry, self.disc_meta) = self.get_disc_meta_online_func(self.disc_id)
+		(self.track_list, self.disc_meta) = self.get_new_disc_func(self.disc_id)
 
 	def is_no_disc_meta(self):
 		return not self.disc_meta
@@ -99,31 +101,26 @@ class Player(object):
 	def decrement_track_number(self):
 		self.queued_track -= 1
 
-	def find_flac(self):
-		# check if disc entry contains the queued track number
-		self.is_flac_available = False
-
 	def is_flac_available(self):
-		return self.is_flac_available
+		return self.queued_track <= len(self.track_list)
 
 	def begin_playback(self):
 		self.current_track = self.queued_track
-		# full file path name is available here
-		self.begin_playback_callback()
+		self.begin_playback_callback(self.track_list[self.current_track])
 
 	def stop_playback(self):
 		self.stop_playback_callback()
 
-		self.is_flac_available = None
 		self.current_track = None
 		self.current_frame = None
+		self.total_frames = None
 		self.queued_track = None
 
 	def pause_playback(self):
-		pass
+		self.pause_playback_callback()
 
 	def resume_playback(self):
-		pass
+		self.resume_playback_callback()
 
 	def next_track(self):
 		pass
@@ -137,36 +134,41 @@ class Player(object):
 	def has_next_track(self):
 		return self.queued_track < self.disc_meta.count()
 
-	def update_position(self, frame=None):
+	def update_position(self, frame=None, track_change=False):
 		self.current_frame = frame
 
-	def update_disc_entry(self, disc_entry=None):
-		if disc_entry:
-			self.disc_entry = disc_entry
+	def update_track_list(self, track_list=None):
+		if track_list:
+			self.track_list = track_list
+
+	def on_state_change(self):
+		self.after_state_change_callback()
 
 
 def create_player(
 	read_disc_id_func,
 	check_disc_db_func,
-	get_disc_meta_db_func,
-	get_disc_meta_online_func,
-	eject_func,
+	get_known_disc_func,
+	get_new_disc_func,
 	begin_playback_callback,
 	stop_playback_callback,
 	pause_playback_callback,
+	resume_playback_callback,
+	after_state_change_callback,
 ):
 
 	player = Player(
 		read_disc_id_func,
 		check_disc_db_func,
-		get_disc_meta_db_func,
-		get_disc_meta_online_func,
+		get_known_disc_func,
+		get_new_disc_func,
 		begin_playback_callback,
 		stop_playback_callback,
 		pause_playback_callback,
-		eject_func
+		resume_playback_callback,
+		after_state_change_callback
 	)
-	machine = Machine(player, states=States, initial=States.INIT)
+	machine = Machine(player, states=States, initial=States.INIT, after_state_change='on_state_change')
 
 	#
 	# Disc identification
@@ -207,7 +209,7 @@ def create_player(
 		States.STOPPED,
 		States.WAITING_FOR_DATA,
 		unless='is_flac_available',
-		prepare=['set_track_number', 'find_flac']
+		prepare=['set_track_number']
 	)
 	machine.add_transition(
 		Triggers.PLAY,
@@ -226,7 +228,7 @@ def create_player(
 	# Track switching
 	machine.add_transition(
 		Triggers.PREV,
-		[States.PLAYING, States.WAITING_FOR_DATA],
+		[States.PLAYING, States.PAUSED, States.WAITING_FOR_DATA],
 		States.PLAYING,
 		conditions=['has_prev_track', 'is_flac_available'],
 		prepare='decrement_track_number',
@@ -234,7 +236,7 @@ def create_player(
 	)
 	machine.add_transition(
 		Triggers.NEXT,
-		[States.PLAYING, States.WAITING_FOR_DATA],
+		[States.PLAYING, States.PAUSED, States.WAITING_FOR_DATA],
 		States.PLAYING,
 		conditions=['has_next_track', 'is_flac_available'],
 		prepare='increment_track_number',
@@ -264,7 +266,7 @@ def create_player(
 		States.WAITING_FOR_DATA,
 		States.PLAYING,
 		conditions='is_flac_available',
-		prepare='update_disc_entry',
+		prepare='update_track_list',
 		before='begin_playback'
 	)
 
