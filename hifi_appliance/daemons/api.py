@@ -1,7 +1,8 @@
-import sys
+import grp
+import logging
 import os
 import pwd
-import grp
+import sys
 import threading
 import time
 import traceback
@@ -10,6 +11,8 @@ from daemon import DaemonContext
 from lockfile.pidlockfile import PIDLockFile
 
 from zmq.eventloop.ioloop import IOLoop
+
+from ..config import LOGGING_LEVEL
 
 
 class DaemonError(Exception):
@@ -26,6 +29,8 @@ class Daemon(object):
         cfg: a DaemonConfig object
         debug: True if debug messages should be logged
         """
+
+        logging.getLogger('hifi_appliance').setLevel(LOGGING_LEVEL)
 
         self._daemon_config = cfg
         self._log_debug = debug

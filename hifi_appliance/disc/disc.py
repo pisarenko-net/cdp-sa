@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -10,11 +11,16 @@ from .toc import Toc, TOCError
 from ..config import CD_DEVICE
 
 
+logger = logging.getLogger(__name__)
+
+
 def read_disc_id():
     try:
         disc = discid.read(CD_DEVICE)
+        logger.info('Disc identified as %s', disc.id)
         return disc.id
     except discid.disc.DiscError:
+        logger.error('Could not identify disc.')
         return None
 
 
@@ -23,7 +29,7 @@ def _read_toc_into_file(toc_filepath):
         try:
             subprocess.call(['cdrdao', 'read-toc', '--fast-toc', toc_filepath], stdout=dev_null, stderr=dev_null)
         except subprocess.CalledProcessError as e:
-            pass
+            logger.error('Failed to call cdrdao for TOC extraction')
 
 
 def _convert_track_info(toc_track_info):
@@ -42,6 +48,7 @@ def _convert_track_info(toc_track_info):
 
 
 def read_disc_meta(disc_id, toc_filepath=tempfile.NamedTemporaryFile().name):
+    logger.info('Reading disc meta from the disc')
     _read_toc_into_file(toc_filepath)
 
     try:
@@ -62,4 +69,5 @@ def read_disc_meta(disc_id, toc_filepath=tempfile.NamedTemporaryFile().name):
             'total_cds': 1
         }
     except TOCError:
+        logger.error('Could not parse disc TOC')
         return None

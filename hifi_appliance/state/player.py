@@ -21,6 +21,7 @@ class Triggers(object):
 	CHECK_DISC = 'check_disc'
 	QUERY_DISC = 'query_disc'
 	PLAY = 'play'
+	BUFFER = 'buffer'
 	PLAYING = 'playing'
 	STOP = 'stop'
 	PAUSE = 'pause'
@@ -31,19 +32,17 @@ class Triggers(object):
 
 
 class Player(object):
-	"""
-	Encapsulate state entire
-	"""
 	def __init__(
 		self,
 		read_disc_id_func,
 		check_disc_db_func,
 		get_known_disc_func,
 		get_new_disc_func,
-		begin_playback_callback,
-		stop_playback_callback,
-		pause_playback_callback,
-		resume_playback_callback,
+		start_audio_func,
+		buffer_audio_func,
+		stop_audio_func,
+		pause_playback_func,
+		resume_playback_func,
 		after_state_change_callback
 	):
 
@@ -52,10 +51,12 @@ class Player(object):
 		self.get_known_disc_func = get_known_disc_func
 		self.get_new_disc_func = get_new_disc_func
 
-		self.begin_playback_callback = begin_playback_callback
-		self.stop_playback_callback = stop_playback_callback
-		self.pause_playback_callback = pause_playback_callback
-		self.resume_playback_callback = resume_playback_callback
+		self.start_audio_func = start_audio_func
+		self.buffer_audio_func = buffer_audio_func
+		self.stop_audio_func = stop_audio_func
+		self.pause_playback_func = pause_playback_func
+		self.resume_playback_func = resume_playback_func
+
 		self.after_state_change_callback = after_state_change_callback
 
 		self.clear_internal_state()
@@ -63,13 +64,25 @@ class Player(object):
 	def clear_internal_state(self):
 		self.disc_id = None
 		self.in_db = None
-		self.track_list = None
-		self.disc_meta = None
+		self.track_list = []
+		self.disc_meta = {}
 
 		self.queued_track = None
 		self.current_track = None
 		self.current_frame = None
 		self.total_frames = None
+		self.next_track_frames = None
+
+	def get_full_state(self):
+		return {
+			'state': self.state.value,
+			'disc_id': self.disc_id,
+			'track_list': self.track_list,
+			'disc_meta': self.disc_meta,
+			'current_track': self.current_track,
+			'current_frame': self.current_frame,
+			'total_frames': self.total_frames,
+		}
 
 	def read_disc_id(self):
 		self.disc_id = self.read_disc_id_func()
@@ -106,10 +119,13 @@ class Player(object):
 
 	def begin_playback(self):
 		self.current_track = self.queued_track
-		self.begin_playback_callback(self.track_list[self.current_track])
+		self.current_frame = 0
+		self.total_frames = self.start_audio_func(
+			self.track_list[self.current_track]
+		)
 
 	def stop_playback(self):
-		self.stop_playback_callback()
+		self.stop_audio_func()
 
 		self.current_track = None
 		self.current_frame = None
@@ -117,10 +133,10 @@ class Player(object):
 		self.queued_track = None
 
 	def pause_playback(self):
-		self.pause_playback_callback()
+		self.pause_playback_func()
 
 	def resume_playback(self):
-		self.resume_playback_callback()
+		self.resume_playback_func()
 
 	def next_track(self):
 		pass
@@ -134,14 +150,28 @@ class Player(object):
 	def has_next_track(self):
 		return self.queued_track < self.disc_meta.count()
 
-	def update_position(self, frame=None, track_change=False):
-		self.current_frame = frame
+	def update_position(self, frames, track_changed=False):
+		if track_changed:
+			self.total_frames = self.next_track_frames
+			self.next_track_frames = None
+			self.current_track += 1
+			self.current_frame = 0
+		else:
+			self.current_frame += frames
+
+	def has_more_tracks(self):
+		return self.current_track < len(self.track_list)
+
+	def buffer_next_track(self):
+		self.next_track_frames = self.buffer_audio_func(
+			self.track_list[self.current_track + 1]
+		)
 
 	def update_track_list(self, track_list=None):
 		if track_list:
 			self.track_list = track_list
 
-	def on_state_change(self):
+	def on_state_change(self, *args, **kwargs):
 		self.after_state_change_callback()
 
 
@@ -150,10 +180,11 @@ def create_player(
 	check_disc_db_func,
 	get_known_disc_func,
 	get_new_disc_func,
-	begin_playback_callback,
-	stop_playback_callback,
-	pause_playback_callback,
-	resume_playback_callback,
+	start_audio_func,
+	buffer_audio_func,
+	stop_audio_func,
+	pause_playback_func,
+	resume_playback_func,
 	after_state_change_callback,
 ):
 
@@ -162,10 +193,11 @@ def create_player(
 		check_disc_db_func,
 		get_known_disc_func,
 		get_new_disc_func,
-		begin_playback_callback,
-		stop_playback_callback,
-		pause_playback_callback,
-		resume_playback_callback,
+		start_audio_func,
+		buffer_audio_func,
+		stop_audio_func,
+		pause_playback_func,
+		resume_playback_func,
 		after_state_change_callback
 	)
 	machine = Machine(player, states=States, initial=States.INIT, after_state_change='on_state_change')
@@ -221,6 +253,13 @@ def create_player(
 	)
 	machine.add_transition(Triggers.PLAY, States.PAUSED, States.PLAYING, before='resume_playback')
 	machine.add_transition(Triggers.PLAYING, States.PLAYING, States.PLAYING, before='update_position')
+	machine.add_transition(
+		Triggers.BUFFER,
+		States.PLAYING,
+		States.PLAYING,
+		conditions='has_more_tracks',
+		before='buffer_next_track'
+	)
 	machine.add_transition(Triggers.STOP, States.PLAYING, States.STOPPED, before='stop_playback')
 	machine.add_transition(Triggers.PAUSE, States.PLAYING, States.PAUSED, before='pause_playback')
 

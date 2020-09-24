@@ -50,14 +50,14 @@ class MiniaudioSink(object):
         track_changed_callback = lambda: print('track just changed'),
         need_data_callback = lambda: print('running out of data soon'),
         playback_stopped_callback = lambda: print('playback stopped'),
-        frame_played_callback = lambda: print(".", end="", flush=True)
+        frames_played_callback = lambda: print(".", end="", flush=True)
     ):
         self._next_track_mark = None
 
         self.track_changed_callback = track_changed_callback
         self.need_data_callback = need_data_callback
         self.playback_stopped_callback = playback_stopped_callback
-        self.frame_played_callback = frame_played_callback
+        self.frames_played_callback = frames_played_callback
 
         # the audio stops and should be started
         # from scratch as soon as this lock is released
@@ -116,7 +116,7 @@ class MiniaudioSink(object):
                 self._on_buffer_empty()
                 self.playing.wait()
 
-            self.frame_played_callback()
+            self.frames_played_callback(required_frames)
             required_frames = yield sample_data
 
     def _is_past_track_mark(self):
@@ -160,7 +160,7 @@ class MiniaudioSink(object):
             self.stream.write(pcm_data)
             self.refill_requested.clear()
 
-        return len(pcm_data)
+        return self.get_frame_count(pcm_data)
 
     def _read_pcm(self, track_file_name):
         ffmpeg = subprocess.Popen(
@@ -185,7 +185,10 @@ class MiniaudioSink(object):
             self.refill_requested.clear()
 
         self.resume()
-        return len(pcm_data)
+        return self.get_frame_count(pcm_data)
+
+    def get_frame_count(self, pcm_data):
+        return len(pcm_data) // (CHANNELS * SAMPLE_WIDTH)
 
     def pause(self):
         self.playing.clear()

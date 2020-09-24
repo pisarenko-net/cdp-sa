@@ -1,6 +1,7 @@
 import sys
 import yaml
 
+from .app import *
 from .cd import *
 from .db import *
 from .media import *

@@ -1,5 +1,7 @@
 import mutagen
 
+from ..constants import CHANNELS
+
 
 class MutagenTagReader(object):
 	def query(self, disc_id, track_files):
@@ -13,7 +15,7 @@ class MutagenTagReader(object):
 			disc_meta['tracks'].append({
 				'artist': flac_data['artist'][0],
 				'title': flac_data['title'][0],
-				'duration': flac_data.info.total_samples
+				'duration': flac_data.info.total_samples // CHANNELS
 			})
 			disc_meta['title'] = flac_data['album']
 

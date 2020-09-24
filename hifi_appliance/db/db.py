@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from pathlib import Path
@@ -13,6 +14,9 @@ from ..config import MUSIC_PATH_NAME
 
 
 _TRACK_REGEX = re.compile(r'^\d\d .*\.flac$', re.IGNORECASE)
+
+
+logger = logging.getLogger(__name__)
 
 
 class TrackDB(object):
@@ -42,7 +46,12 @@ class TrackDB(object):
         with self._lock:
             self._db().dump()
 
+    def count(self):
+        return self._db.totalkeys()
+
     def rebuild(self):
+        logger.info('Rebuilding track database')
+
         discs = {}
         for root, _, files in os.walk(MUSIC_PATH_NAME):
             if '.disc_id' in files:
@@ -57,6 +66,8 @@ class TrackDB(object):
             for disc_id in discs:
                 self.store_track_list(disc_id, discs[disc_id])
             self._db.dump()
+
+        logger.info('Track database rebuilt, %s discs indexed', self.count())
 
     def _rebuild_loop(self):
         while True:

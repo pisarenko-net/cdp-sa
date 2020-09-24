@@ -1,12 +1,19 @@
+import logging
+
 import musicbrainzngs
 from retrying import retry
 
 from ..constants import SAMPLE_RATE
 
 
+logger = logging.getLogger(__name__)
+
+
 class MusicbrainzLookup(object):
     @retry(stop_max_attempt_number=5, wait_exponential_multiplier=100)
     def query(self, disc_id):
+        logger.debug('Retrieving disc meta online')
+
         musicbrainzngs.set_useragent('cdp-sa', '0.0.1')
         musicbrainzngs.auth('', '')
 
@@ -21,9 +28,11 @@ class MusicbrainzLookup(object):
                 includes=["artists", "artist-credits", "recordings"]
             )
         except musicbrainzngs.musicbrainz.ResponseError:
+            logger.exception('Could not retrieve disc meta from Musicbrainz')
             return None
 
         if not 'disc' in response.keys() or not 'release-list' in response['disc'].keys():
+            logger.error('Musicbrainz response contains no relevant information')
             return None
 
         this_release = response['disc']['release-list'][0]
@@ -50,6 +59,7 @@ class MusicbrainzLookup(object):
                     break
 
         if not disc_meta['tracks']:
+            logger.error('Musicbrainz response has no information about the tracks')
             return None
 
         disc_meta['duration'] = sum(track['duration'] for track in disc_meta['tracks'])

@@ -76,7 +76,7 @@ class Sender(object):
         """
         self.io_loop = io_loop or IOLoop.instance()
         self.channel = channel
-        self.name = name
+        self.name = name.encode('ascii')
         self._stream = channel.get_sender_stream(name, io_loop)
 
     def __str__(self):
@@ -86,7 +86,7 @@ class Sender(object):
     def send(self, *msg_parts):
         """Send a multipart message to the channel.
         """
-        ascii_msg_parts = [msg_part.encode('ascii') for msg_part in msg_parts]
+        ascii_msg_parts = [self.name] + [msg_part.encode('ascii') for msg_part in msg_parts]
         self.io_loop.add_callback(lambda: self._stream.send_multipart(ascii_msg_parts))
 
     def close(self, linger = None):

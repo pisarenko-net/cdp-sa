@@ -1,5 +1,6 @@
 from collections import namedtuple
 import json
+import logging
 import os
 from pathlib import Path
 import unittest
@@ -17,6 +18,7 @@ class MusicbrainzTestCase(unittest.TestCase):
         self.client = RemoteMeta()
         patch('musicbrainzngs.set_useragent').start()
         patch('musicbrainzngs.auth').start()
+        logging.disable(logging.CRITICAL)
 
     def test_response_error(self):
         with patch('musicbrainzngs.get_releases_by_discid', side_effect=musicbrainzngs.musicbrainz.ResponseError()):
@@ -207,7 +209,7 @@ class MutagenTestCase(unittest.TestCase):
         disc_meta = client.query(disc_id, track_files)
 
         self.assertEqual(disc_meta['disc_id'], disc_id)
-        self.assertEqual(disc_meta['duration'], 123442)
+        self.assertEqual(disc_meta['duration'], 61721)  # half of total samples because it's stereo
         self.assertEqual(disc_meta['title'], 'Krokus')
         self.assertEqual(disc_meta['tracks'][0]['artist'], 'Hokus')
         self.assertEqual(disc_meta['tracks'][0]['title'], 'Pokus')
