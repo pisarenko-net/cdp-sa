@@ -1,2 +1,0 @@
-class Disc(object):
-	pass
