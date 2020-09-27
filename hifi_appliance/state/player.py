@@ -14,20 +14,17 @@ logger = logging.getLogger(__name__)
 class States(Enum):
 	INIT = 0
 	NO_DISC = 1
-	DISC_ID = 2
-	LOOK_UP = 3
-	UNKNOWN_DISC = 4
-	STOPPED = 5
-	PLAYING = 6
-	PAUSED = 7
-	WAITING_FOR_DATA = 8
+	UNKNOWN_DISC = 2
+	STOPPED = 3
+	PLAYING = 4
+	PAUSED = 5
+	WAITING_FOR_DATA = 6
 
 
 class Triggers(object):
 	INIT = 'init'
-	READ_DISC = 'read_disc'
-	CHECK_DISC = 'check_disc'
-	QUERY_DISC = 'query_disc'
+	START = 'start'
+	UNKNOWN_DISC = 'unknown_disc'
 	PLAY = 'play'
 	PLAYING = 'playing'  # called to notify of playback progress
 	STOP = 'stop'
@@ -42,10 +39,6 @@ class Triggers(object):
 class Player(object):
 	def __init__(
 		self,
-		read_disc_id_func,
-		check_disc_db_func,
-		get_known_disc_func,
-		get_new_disc_func,
 		create_audio_func,
 		buffer_track_func,
 		stop_audio_func,
@@ -53,11 +46,6 @@ class Player(object):
 		resume_playback_func,
 		after_state_change_callback
 	):
-
-		self.read_disc_id_func = read_disc_id_func
-		self.check_disc_db_func = check_disc_db_func
-		self.get_known_disc_func = get_known_disc_func
-		self.get_new_disc_func = get_new_disc_func
 
 		self.create_audio_func = create_audio_func
 		self.buffer_track_func = buffer_track_func
@@ -72,8 +60,6 @@ class Player(object):
 		self._clear_internal_state()
 
 	def _clear_internal_state(self):
-		self.disc_id = None
-		self.in_db = None
 		self.track_list = []
 		self.disc_meta = {}
 
@@ -88,7 +74,6 @@ class Player(object):
 	def get_full_state(self):
 		return {
 			'state': self.state.value,
-			'disc_id': self.disc_id,
 			'track_list': self.track_list,
 			'disc_meta': self.disc_meta,
 			'current_track': self.current_track,
@@ -99,12 +84,6 @@ class Player(object):
 
 	#
 	# Internal conditionals
-
-	def is_disc_in_db(self):
-		return self.in_db
-
-	def has_disc_id(self):
-		return self.disc_id is not None
 
 	def is_no_disc_meta(self):
 		return not self.disc_meta
@@ -122,18 +101,6 @@ class Player(object):
 
 	#
 	# External interface (callbacks)
-
-	def read_disc_id(self):
-		self.disc_id = self.read_disc_id_func()
-
-	def check_disc_in_db(self):
-		self.in_db = self.check_disc_db_func(self.disc_id)
-
-	def get_disc_meta_db(self):
-		(self.track_list, self.disc_meta) = self.get_known_disc_func(self.disc_id)
-
-	def get_disc_meta_online(self):
-		(self.track_list, self.disc_meta) = self.get_new_disc_func(self.disc_id)
 
 	def start_playback(self):
 		'''Creates a new audio device and sets it up. Called once for a
@@ -162,6 +129,10 @@ class Player(object):
 
 	#
 	# Internal state changes
+
+	def set_disc_meta(self, track_list, disc_meta):
+		self.track_list = track_list
+		self.disc_meta = disc_meta
 
 	def next_track(self):
 		self.current_track += 1
@@ -213,10 +184,6 @@ class Player(object):
 
 
 def create_player(
-	read_disc_id_func,
-	check_disc_db_func,
-	get_known_disc_func,
-	get_new_disc_func,
 	create_audio_func,
 	buffer_track_func,
 	stop_audio_func,
@@ -226,10 +193,6 @@ def create_player(
 ):
 
 	player = Player(
-		read_disc_id_func,
-		check_disc_db_func,
-		get_known_disc_func,
-		get_new_disc_func,
 		create_audio_func,
 		buffer_track_func,
 		stop_audio_func,
@@ -240,36 +203,18 @@ def create_player(
 	machine = Machine(player, states=States, initial=States.INIT, after_state_change='on_state_change')
 
 	#
-	# Disc identification
+	# External triggers
 	machine.add_transition(
-		Triggers.READ_DISC,
+		Triggers.UNKNOWN_DISC,
 		States.NO_DISC,
-		States.DISC_ID,
-		conditions='has_disc_id',
-		prepare='read_disc_id'
+		States.UNKNOWN_DISC
 	)
 	machine.add_transition(
-		Triggers.READ_DISC,
+		Triggers.START,
 		States.NO_DISC,
-		States.UNKNOWN_DISC,
-		unless='has_disc_id'
-	)
-	machine.add_transition(Triggers.CHECK_DISC, States.DISC_ID, States.LOOK_UP, before='check_disc_in_db')
-	machine.add_transition(
-		Triggers.QUERY_DISC,
-		States.LOOK_UP,
 		States.STOPPED,
-		conditions='is_disc_in_db',
-		before='get_disc_meta_db'
+		before='set_disc_meta'
 	)
-	machine.add_transition(
-		Triggers.QUERY_DISC,
-		States.LOOK_UP,
-		States.STOPPED,
-		unless='is_no_disc_meta',
-		prepare='get_disc_meta_online'
-	)
-	machine.add_transition(Triggers.QUERY_DISC, States.LOOK_UP, States.UNKNOWN_DISC, conditions='is_no_disc_meta')
 
 	#
 	# Disc playback
@@ -288,7 +233,12 @@ def create_player(
 	)
 	machine.add_transition(Triggers.PLAY, States.PAUSED, States.PLAYING, before='resume_playback')
 	machine.add_transition(Triggers.PLAYING, States.PLAYING, States.PLAYING, before='update_position')
-	machine.add_transition(Triggers.STOP, States.PLAYING, States.STOPPED, before='stop_playback')
+	machine.add_transition(
+		Triggers.STOP,
+		[States.PLAYING, States.PAUSED, States.WAITING_FOR_DATA],
+		States.STOPPED,
+		before='stop_playback'
+	)
 	machine.add_transition(Triggers.PAUSE, States.PLAYING, States.PAUSED, before='pause_playback')
 
 	machine.add_transition(

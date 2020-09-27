@@ -3,7 +3,7 @@ import sys
 
 from .daemons import Daemon
 from .message_bus import Receiver
-from .message_bus import state as topic_state
+from .message_bus import state as channel_state
 from .state import PlayerStates
 
 
@@ -13,7 +13,7 @@ class Display(Daemon):
 
     def setup_postfork(self):
         self.state_receiver = Receiver(
-            topic_state,
+            channel_state,
             name='display',
             io_loop=self.io_loop,
             callbacks={

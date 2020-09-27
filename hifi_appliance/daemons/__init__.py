@@ -1,1 +1,1 @@
-from .api import Daemon
+from .api import CdpDaemon

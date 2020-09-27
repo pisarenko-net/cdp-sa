@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from hifi_appliance.display import Display
+from hifi_appliance.commander import Commander
 
 
 daemon_config = namedtuple(
@@ -14,4 +14,4 @@ daemon_config.pid_file = '/home/sergey/playback.pid'
 daemon_config.log_file = '/home/sergey/playback.log'
 
 
-display = Display(daemon_config, debug=True)
+playback = Commander(daemon_config, debug=True)

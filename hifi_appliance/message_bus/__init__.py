@@ -5,6 +5,7 @@ from .channel import Queue, Topic
 # State changes
 state = Topic(
     name='state',
+    commander='tcp://127.0.0.1:7921',
     playback='tcp://127.0.0.1:7922',
     ripper='tcp://127.0.0.1:7923',
     ctl='tcp://127.0.0.1:7924'
@@ -31,6 +32,13 @@ command = Queue(
 command_playback = Queue(
     name='command_playback',
     address='tcp://127.0.0.1:7943',
+)
+
+
+# Ripper commands, to only be called by commander
+command_ripper = Queue(
+    name='command_ripper',
+    address='tcp://127.0.0.1:7963',
 )
 
 

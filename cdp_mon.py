@@ -3,11 +3,11 @@ import getpass
 
 from hifi_appliance.daemons import Daemon
 from hifi_appliance.message_bus import Receiver
-from hifi_appliance.message_bus import state as topic_state
-from hifi_appliance.message_bus import error as topic_error
-from hifi_appliance.message_bus import command as queue_command
-from hifi_appliance.message_bus import command_playback as queue_command_playback
-from hifi_appliance.message_bus import command_minidisc as queue_command_minidisc
+from hifi_appliance.message_bus import state as channel_state
+from hifi_appliance.message_bus import error as channel_error
+from hifi_appliance.message_bus import command as channel_command
+from hifi_appliance.message_bus import command_playback as channel_command_playback
+from hifi_appliance.message_bus import command_minidisc as channel_command_minidisc
 
 
 class MessageMonitor(Daemon):
@@ -19,7 +19,7 @@ class MessageMonitor(Daemon):
 
     def setup_postfork(self):
         self.state_receiver = Receiver(
-            topic_state,
+            channel_state,
             name='monitor',
             io_loop=self.io_loop,
             callbacks={
@@ -30,7 +30,7 @@ class MessageMonitor(Daemon):
         )
 
         self.error_receiver = Receiver(
-            topic_error,
+            channel_error,
             name='monitor',
             io_loop=self.io_loop,
             callbacks={
@@ -43,21 +43,21 @@ class MessageMonitor(Daemon):
         # these below can be uncommented when there's no other receiver
 
         # self.command_receiver = Receiver(
-        #     queue_command,
+        #     channel_command,
         #     io_loop=self.io_loop,
         #     callbacks={},
         #     fallback=self.create_callback('command')
         # )
 
         # self.playback_receiver = Receiver(
-        #     queue_command_playback,
+        #     channel_command_playback,
         #     io_loop=self.io_loop,
         #     callbacks={},
         #     fallback=self.create_callback('command_playback')
         # )
 
         # self.minidisc_receiver = Receiver(
-        #     queue_command_minidisc,
+        #     channel_command_minidisc,
         #     io_loop=self.io_loop,
         #     callbacks={},
         #     fallback=self.create_callback('command_minidisc')

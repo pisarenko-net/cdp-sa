@@ -9,17 +9,21 @@ import traceback
 
 from daemon import DaemonContext
 from lockfile.pidlockfile import PIDLockFile
-
+import transitions
 from zmq.eventloop.ioloop import IOLoop
 
 from ..config import LOGGING_LEVEL
+from ..message_bus import Receiver
+
+
+logger = logging.getLogger(__name__)
 
 
 class DaemonError(Exception):
     pass
 
 
-class Daemon(object):
+class CdpDaemon(object):
     """Base class for all daemons.  Handles log files,
     dropping privileges, forking etc.
     """
@@ -179,9 +183,39 @@ class Daemon(object):
         if self._log_debug:
             self.log(msg, *args, **kwargs)
 
+    def setup_command_receiver(self, channel):
+        callbacks = {}
+        for name in dir(self):
+            if name.startswith('command_'):
+                func = getattr(self, name)
+                if callable(func):
+                    callbacks[name[8:]] = (
+                        lambda receiver, msg, func2 = func: self.handle_command(msg, func2)
+                    )
+
+        return Receiver(
+            channel,
+            io_loop = self.io_loop,
+            callbacks = callbacks,
+            fallback = self.handle_unknown_command
+        )
+
+    def handle_command(self, args, command_function):
+        command = args[0]
+        arguments = args[1:]
+
+        logger.debug('Received command %s with arguments %s', command, arguments)
+
+        try:
+            result = command_function(arguments)
+        except transitions.core.MachineError:
+            logger.exception('State machine refused transition')
+
+    def handle_unknown_command(self, receiver, msg_parts):
+        logger.error('Unknown command received %s', msg_parts)
+
 
 class DaemonIOLoop(IOLoop):
     def handle_callback_exception(self, callback):
         self._cod_daemon.log('Unhandled exception:\n{}', traceback.format_exc())
         sys.exit(1)
-

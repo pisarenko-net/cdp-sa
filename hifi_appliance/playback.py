@@ -1,43 +1,35 @@
 import json
 import logging
-import threading
 import time
 
-import transitions
-
-from . import db as track_db
 from .audio import MiniaudioSink
-from .daemons import Daemon
-from .disc import read_disc_id
-from .disc import read_disc_meta
+from .daemons import CdpDaemon
 from .message_bus import Receiver
 from .message_bus import Sender
-from .message_bus import setup_command_receiver
-from .message_bus import command_playback as queue_command
-from .message_bus import error as topic_error
-from .message_bus import state as topic_state
-from .meta import LocalMeta
-from .meta import RemoteMeta
+from .message_bus import command_playback as channel_command
+from .message_bus import state as channel_state
 from .state import create_player
 
 
 logger = logging.getLogger(__name__)
 
 
-class Playback(Daemon):
+class PlaybackCommand(object):
+    UNKNOWN_DISC = 'unknown_disc'
+    START = 'start'
+    PLAY = 'play'
+    STOP = 'stop'
+    PAUSE = 'pause'
+    NEXT = 'next'
+    PREV = 'prev'
+    EJECT = 'eject'
+
+
+class Playback(CdpDaemon):
     def __init__(self, daemon_config, debug=False):
-        self.db = track_db
-
-        self.local_meta = LocalMeta()
-        self.remote_meta = RemoteMeta()
-
         self.audio = None
 
         self.state_machine = create_player(
-            read_disc_id,
-            self.db.has_disc,
-            self.get_known_disc,
-            self.get_new_disc,
             self.create_audio,
             self.buffer_track,
             self.stop_audio,
@@ -50,16 +42,11 @@ class Playback(Daemon):
 
     def setup_postfork(self):
         self.state_sender = Sender(
-            topic_state,
+            channel_state,
             name='playback',
             io_loop=self.io_loop
         )
-        self.error_sender = Sender(
-            topic_error,
-            name='playback',
-            io_loop=self.io_loop
-        )
-        self.command_receiver = setup_command_receiver(self, queue_command)
+        self.command_receiver = self.setup_command_receiver(channel_command)
 
         self.state_machine.init()
 
@@ -70,20 +57,7 @@ class Playback(Daemon):
         self.io_loop.start()
 
     #
-    # Interface for state machine
-
-    def get_known_disc(self, disc_id):
-        logger.info('Disc already indexed: reading meta from file system')
-        track_list = self.db.get_track_list(disc_id)
-        disc_meta = self.local_meta.query(disc_id, track_list)
-        return (track_list, disc_meta)
-
-    def get_new_disc(self, disc_id):
-        logger.info('New disc: reading meta online or from the disc itself')
-        disc_meta = self.remote_meta.query(disc_id)
-        if not disc_meta:
-            disc_meta = read_disc_meta(disc_id)
-        return ([], disc_meta)
+    # Interface between state machine and audio
 
     def create_audio(self):
         if self.audio:
@@ -105,29 +79,13 @@ class Playback(Daemon):
 
     def stop_audio(self):
         logger.debug('Requested to release audio device')
-        self.audio.pause()
-        self.audio.release()
-        self.audio = None
+        if self.audio:
+            self.audio.pause()
+            self.audio.release()
+            self.audio = None
 
     def send_current_state(self):
         self.state_sender.send(json.dumps(self.state_machine.get_full_state()))
-
-    #
-    # Receiving commands
-
-    def handle_command(self, args, command_function):
-        command = args[0]
-        arguments = args[1:]
-
-        logger.debug('Received command %s with arguments %s', command, arguments)
-
-        try:
-            result = command_function(arguments)
-        except transitions.core.MachineError:
-            logger.exception('State machine refused transition')
-
-    def handle_unknown_command(self, receiver, msg_parts):
-        logger.error('Unknown command received %s', msg_parts)
 
     #
     # Audio events
@@ -149,11 +107,16 @@ class Playback(Daemon):
     #
     # Control commands
 
-    def command_disc(self, args):
-        """Triggered by OS when new Audio CD inserted."""
-        self.state_machine.read_disc()
-        self.state_machine.check_disc()
-        self.state_machine.query_disc()
+    def command_unknown_disc(self, args):
+        self.state_machine.unknown_disc()
+
+    def command_start(self, args):
+        track_list = json.loads(args[0])
+        disc_meta = json.loads(args[1])
+        self.state_machine.start(track_list, disc_meta)
+
+    def command_eject(self, args):
+        self.state_machine.eject()
 
     #
     # Playback commands
@@ -178,9 +141,3 @@ class Playback(Daemon):
 
     def command_state(self, arg):
         self.send_current_state()
-
-    def command_db_rebuild(self, args):
-        self.db.rebuild()
-
-    def command_db_stat(self, args):
-        print('%s discs indexed' % self.db.count())
