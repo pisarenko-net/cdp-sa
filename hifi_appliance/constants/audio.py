@@ -1,2 +1,2 @@
-MEMORY_STREAM_GC_THRESHOLD = 200 * 1024 * 1024  # at most accrued until GC'ed
-BUFFER_REFRESH_THRESHOLD = 8 * 1024 * 1024  # ask for more when <8MB left (~45sec)
+BUFFER_SIZE = 100 * 1024 * 1024
+NEXT_TRACK_BUFFER_THRESHOLD_SECONDS = 30  # how long before the end of the current track before next one is loaded

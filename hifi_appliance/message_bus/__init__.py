@@ -1,4 +1,4 @@
-from .api import Receiver, Sender
+from .api import Receiver, Sender, setup_command_receiver
 from .channel import Queue, Topic
 
 

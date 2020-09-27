@@ -36,6 +36,7 @@ Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUS
  - musicbrainzngs
  - mutagen
  - pyyaml
+ - pyringbuffer
 
 ## Attribution
 

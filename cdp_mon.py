@@ -40,26 +40,28 @@ class MessageMonitor(Daemon):
             fallback=self.create_callback('error')
         )
 
-        self.command_receiver = Receiver(
-            queue_command,
-            io_loop=self.io_loop,
-            callbacks={},
-            fallback=self.create_callback('command')
-        )
+        # these below can be uncommented when there's no other receiver
 
-        self.playback_receiver = Receiver(
-            queue_command_playback,
-            io_loop=self.io_loop,
-            callbacks={},
-            fallback=self.create_callback('command_playback')
-        )
+        # self.command_receiver = Receiver(
+        #     queue_command,
+        #     io_loop=self.io_loop,
+        #     callbacks={},
+        #     fallback=self.create_callback('command')
+        # )
 
-        self.minidisc_receiver = Receiver(
-            queue_command_minidisc,
-            io_loop=self.io_loop,
-            callbacks={},
-            fallback=self.create_callback('command_minidisc')
-        )
+        # self.playback_receiver = Receiver(
+        #     queue_command_playback,
+        #     io_loop=self.io_loop,
+        #     callbacks={},
+        #     fallback=self.create_callback('command_playback')
+        # )
+
+        # self.minidisc_receiver = Receiver(
+        #     queue_command_minidisc,
+        #     io_loop=self.io_loop,
+        #     callbacks={},
+        #     fallback=self.create_callback('command_minidisc')
+        # )
 
     def run(self):
         self.io_loop.start()

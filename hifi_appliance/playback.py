@@ -12,6 +12,7 @@ from .disc import read_disc_id
 from .disc import read_disc_meta
 from .message_bus import Receiver
 from .message_bus import Sender
+from .message_bus import setup_command_receiver
 from .message_bus import command_playback as queue_command
 from .message_bus import error as topic_error
 from .message_bus import state as topic_state
@@ -30,23 +31,18 @@ class Playback(Daemon):
         self.local_meta = LocalMeta()
         self.remote_meta = RemoteMeta()
 
-        self.audio = MiniaudioSink(
-            track_changed_callback = self.on_audio_track_changed, 
-            need_data_callback = self.on_audio_buffer_low,
-            playback_stopped_callback = self.on_audio_stopped,
-            frames_played_callback = self.on_audio_frames
-        )
+        self.audio = None
 
         self.state_machine = create_player(
             read_disc_id,
             self.db.has_disc,
             self.get_known_disc,
             self.get_new_disc,
-            self.audio.play_now,
-            self.audio.play_next,
-            self.audio.stop,
-            self.audio.pause,
-            self.audio.resume,
+            self.create_audio,
+            self.buffer_track,
+            self.stop_audio,
+            self.pause_audio,
+            self.resume_audio,
             self.on_player_state_change
         )
 
@@ -63,26 +59,18 @@ class Playback(Daemon):
             name='playback',
             io_loop=self.io_loop
         )
-        self.setup_command_receiver()
+        self.command_receiver = setup_command_receiver(self, queue_command)
 
         self.state_machine.init()
 
-    def setup_command_receiver(self):
-        callbacks = {}
-        for name in dir(self):
-            if name.startswith('command_'):
-                func = getattr(self, name)
-                if callable(func):
-                    callbacks[name[8:]] = (
-                        lambda receiver, msg, func2 = func: self.handle_command(msg, func2)
-                    )
+    def run(self):
+        for i in range(30):
+            self.io_loop.add_timeout(time.time() + i, self.send_current_state)
 
-        self.command_receiver = Receiver(
-            queue_command,
-            io_loop = self.io_loop,
-            callbacks = callbacks,
-            fallback = self.handle_unknown_command
-        )
+        self.io_loop.start()
+
+    #
+    # Interface for state machine
 
     def get_known_disc(self, disc_id):
         logger.info('Disc already indexed: reading meta from file system')
@@ -97,25 +85,35 @@ class Playback(Daemon):
             disc_meta = read_disc_meta(disc_id)
         return ([], disc_meta)
 
-    def on_audio_buffer_low(self):
-        self.state_machine.buffer()
+    def create_audio(self):
+        if self.audio:
+            logger.critical('New audio device requested while old one still exists')
 
-    def on_audio_track_changed(self):
-        self.state_machine.playing(0, track_changed=True)
+        self.audio = MiniaudioSink(
+            playback_stopped_callback = self.on_audio_stopped,
+            frames_played_callback = self.on_audio_frames
+        )
 
-    def on_audio_stopped(self):
-        # TODO: call machine, STOP
-        # careful not create a cycle here
-        pass
+    def buffer_track(self, track_file_name):
+        return self.audio.buffer_track(track_file_name)
 
-    def on_audio_frames(self, frames):
-        self.state_machine.playing(frames)
+    def resume_audio(self):
+        self.audio.resume()
 
-    def on_player_state_change(self):
-        self.send_current_state()
+    def pause_audio(self):
+        self.audio.pause()
+
+    def stop_audio(self):
+        logger.debug('Requested to release audio device')
+        self.audio.pause()
+        self.audio.release()
+        self.audio = None
 
     def send_current_state(self):
         self.state_sender.send(json.dumps(self.state_machine.get_full_state()))
+
+    #
+    # Receiving commands
 
     def handle_command(self, args, command_function):
         command = args[0]
@@ -131,12 +129,34 @@ class Playback(Daemon):
     def handle_unknown_command(self, receiver, msg_parts):
         logger.error('Unknown command received %s', msg_parts)
 
+    #
+    # Audio events
+
+    def on_audio_stopped(self):
+        logger.debug('Audio ran out of frames, releasing audio and stopping state machine')
+        self.audio = None
+        self.state_machine.finish()
+
+    def on_audio_frames(self, frames):
+        self.state_machine.playing(frames)
+
+    #
+    # State machine events
+
+    def on_player_state_change(self):
+        self.send_current_state()
+
+    #
+    # Control commands
+
     def command_disc(self, args):
         """Triggered by OS when new Audio CD inserted."""
         self.state_machine.read_disc()
         self.state_machine.check_disc()
         self.state_machine.query_disc()
-        self.state_machine.play()
+
+    #
+    # Playback commands
 
     def command_play(self, args):
         self.state_machine.play()
@@ -153,6 +173,9 @@ class Playback(Daemon):
     def command_prev(self, args):
         self.state_machine.prev()
 
+    #
+    # Debug commands
+
     def command_state(self, arg):
         self.send_current_state()
 
@@ -161,13 +184,3 @@ class Playback(Daemon):
 
     def command_db_stat(self, args):
         print('%s discs indexed' % self.db.count())
-
-    def run(self):
-        # for i in range(30):
-        #     self.io_loop.add_timeout(time.time() + i, self.force_state_update)
-
-        self.io_loop.start()
-
-
-# state machine decrements track number and then checks,
-# what if it's invalid -- previous value is never restored

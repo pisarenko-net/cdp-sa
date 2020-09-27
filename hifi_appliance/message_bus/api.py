@@ -98,3 +98,21 @@ class Sender(object):
         if self._stream:
             self._stream.close(linger = linger)
             self._stream = None
+
+
+def setup_command_receiver(obj, channel):
+    callbacks = {}
+    for name in dir(obj):
+        if name.startswith('command_'):
+            func = getattr(obj, name)
+            if callable(func):
+                callbacks[name[8:]] = (
+                    lambda receiver, msg, func2 = func: obj.handle_command(msg, func2)
+                )
+
+    return Receiver(
+        channel,
+        io_loop = obj.io_loop,
+        callbacks = callbacks,
+        fallback = obj.handle_unknown_command
+    )
