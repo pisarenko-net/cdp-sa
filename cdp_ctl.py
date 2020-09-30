@@ -7,7 +7,7 @@ from hifi_appliance.message_bus import state as channel_state
 from hifi_appliance.message_bus import error as channel_error
 from hifi_appliance.message_bus import command as channel_command
 from hifi_appliance.message_bus import command_playback as channel_command_playback
-from hifi_appliance.message_bus import command_ripper as channel_command_ripper
+from hifi_appliance.message_bus import command_ripping as channel_command_ripping
 from hifi_appliance.message_bus import command_minidisc as channel_command_minidisc
 
 
@@ -16,7 +16,7 @@ CHANNELS = {
 	'error': None,
 	'command': None,
 	'command_playback': None,
-	'command_ripper': None,
+	'command_ripping': None,
 	'command_minidisc': None
 }
 
@@ -31,7 +31,7 @@ def run_send_loop():
 		'error': context.socket(zmq.PUB),
 		'command': context.socket(zmq.PUSH),
 		'command_playback': context.socket(zmq.PUSH),
-		'command_ripper': context.socket(zmq.PUSH),
+		'command_ripping': context.socket(zmq.PUSH),
 		'command_minidisc': context.socket(zmq.PUSH)
 	}
 
@@ -39,7 +39,7 @@ def run_send_loop():
 	channels['error'].bind(channel_error._pub_addresses[b'ctl'])
 	channels['command'].connect(channel_command._address)
 	channels['command_playback'].connect(channel_command_playback._address)
-	channels['command_ripper'].connect(channel_command_playback._address)
+	channels['command_ripping'].connect(channel_command_ripping._address)
 	channels['command_minidisc'].connect(channel_command_minidisc._address)
 
 	while True:

@@ -9,6 +9,7 @@ from .message_bus import Sender
 from .message_bus import command_playback as channel_command
 from .message_bus import state as channel_state
 from .state import create_player
+from .state import PlayerStates
 
 
 logger = logging.getLogger(__name__)
@@ -46,13 +47,23 @@ class Playback(CdpDaemon):
             name='playback',
             io_loop=self.io_loop
         )
+
+        self.state_receiver = Receiver(
+            channel_state,
+            name='playback',
+            io_loop=self.io_loop,
+            callbacks={
+                'ripping': self.on_ripping_state
+            }
+        )
+
         self.command_receiver = self.setup_command_receiver(channel_command)
 
         self.state_machine.init()
 
     def run(self):
-        for i in range(30):
-            self.io_loop.add_timeout(time.time() + i, self.send_current_state)
+        # for i in range(30):
+        #     self.io_loop.add_timeout(time.time() + i, self.send_current_state)
 
         self.io_loop.start()
 
@@ -105,6 +116,16 @@ class Playback(CdpDaemon):
         self.send_current_state()
 
     #
+    # Ripper updates
+
+    def on_ripping_state(self, receiver, args):
+        ripping_state = json.loads(args[1])
+        self.state_machine.ripper_update(ripping_state['track_list'])
+
+        if self.state_machine.state == PlayerStates.WAITING_FOR_DATA:
+            self.state_machine.play()
+
+    #
     # Control commands
 
     def command_unknown_disc(self, args):
@@ -141,3 +162,5 @@ class Playback(CdpDaemon):
 
     def command_state(self, arg):
         self.send_current_state()
+
+# test case: next called when data is not available yet

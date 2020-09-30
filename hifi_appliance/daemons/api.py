@@ -9,7 +9,6 @@ import traceback
 
 from daemon import DaemonContext
 from lockfile.pidlockfile import PIDLockFile
-import transitions
 from zmq.eventloop.ioloop import IOLoop
 
 from ..config import LOGGING_LEVEL
@@ -208,8 +207,8 @@ class CdpDaemon(object):
 
         try:
             result = command_function(arguments)
-        except transitions.core.MachineError:
-            logger.exception('State machine refused transition')
+        except Exception:
+            logger.exception('Error executing command')
 
     def handle_unknown_command(self, receiver, msg_parts):
         logger.error('Unknown command received %s', msg_parts)

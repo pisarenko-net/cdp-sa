@@ -36,6 +36,9 @@ class MusicbrainzLookup(object):
             return None
 
         this_release = response['disc']['release-list'][0]
+        if self.is_single_artist(this_release['artist-credit']):
+            disc_meta['artist'] = this_release['artist-credit-phrase']
+
         disc_meta['title'] = this_release['title']
         disc_meta['total_cds'] = len(list(
             filter(
@@ -65,3 +68,6 @@ class MusicbrainzLookup(object):
         disc_meta['duration'] = sum(track['duration'] for track in disc_meta['tracks'])
 
         return disc_meta
+
+    def is_single_artist(self, artist_credit):
+        return len(artist_credit) == 1 and artist_credit[0]['artist']['type'] in ['Group', 'Person']

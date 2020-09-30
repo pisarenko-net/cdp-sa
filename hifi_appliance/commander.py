@@ -10,11 +10,14 @@ from .message_bus import Receiver
 from .message_bus import Sender
 from .message_bus import command as channel_command
 from .message_bus import command_playback as channel_playback_command
+from .message_bus import command_ripping as channel_ripping_command
 from .message_bus import state as channel_state
 from .meta import LocalMeta
 from .meta import RemoteMeta
 from .playback import PlaybackCommand
+from .ripping import RippingCommand
 from .state import PlayerStates
+from .state import RipperStates
 
 
 logger = logging.getLogger(__name__)
@@ -28,6 +31,7 @@ class Commander(CdpDaemon):
         self.remote_meta = RemoteMeta()
 
         self.playback_state = None
+        self.ripping_state = None
 
         super(Commander, self).__init__(daemon_config, debug)
 
@@ -44,11 +48,16 @@ class Commander(CdpDaemon):
             io_loop=self.io_loop,
             callbacks={
                 'playback': self.update_playback_state,
+                'ripping': self.update_ripping_state
             }
         )
 
         self.playback_command = Sender(
             channel_playback_command,
+            io_loop=self.io_loop
+        )
+        self.ripper_command = Sender(
+            channel_ripping_command,
             io_loop=self.io_loop
         )
 
@@ -66,6 +75,10 @@ class Commander(CdpDaemon):
     def update_playback_state(self, receiver, args):
         playback_state = json.loads(args[1])
         self.playback_state = PlayerStates(playback_state['state'])
+
+    def update_ripping_state(self, receiver, args):
+        ripping_state = json.loads(args[1])
+        self.ripping_state = RipperStates(ripping_state['state'])
 
     #
     # Disc look-up
@@ -108,6 +121,8 @@ class Commander(CdpDaemon):
             json.dumps(disc_meta)
         )
 
+        self.ripper_command.send(RippingCommand.START, json.dumps(disc_meta))
+
     def command_eject(self, args):
         self.playback_command.send(PlaybackCommand.EJECT)
 
@@ -137,6 +152,3 @@ class Commander(CdpDaemon):
 
     def command_db_stat(self, args):
         print('%s discs indexed' % self.db.count())
-
-
-# could as well use state transitions to let only correct commands through

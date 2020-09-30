@@ -32,7 +32,7 @@ class Triggers(object):
 	NEXT = 'next'
 	PREV = 'prev'
 	FINISH = 'finish'  # called when audio ran out of frames
-	RIPPER_TICK = 'ripper_tick'
+	RIPPER_UPDATE = 'ripper_update'
 	EJECT = 'eject'
 
 
@@ -226,7 +226,7 @@ def create_player(
 	)
 	machine.add_transition(
 		Triggers.PLAY,
-		States.STOPPED,
+		[States.WAITING_FOR_DATA, States.STOPPED],
 		States.PLAYING,
 		conditions='is_flac_available',
 		before='start_playback'
@@ -263,7 +263,7 @@ def create_player(
 		Triggers.NEXT,
 		States.PLAYING,
 		States.PLAYING,
-		conditions=['has_next_track'],
+		conditions=['has_next_track', 'is_next_flac_available'],
 		before=['stop_playback', 'next_track', 'start_playback']
 	)
 	machine.add_transition(
@@ -320,6 +320,14 @@ def create_player(
 	)
 	machine.add_transition(
 		Triggers.NEXT,
+		States.PLAYING,
+		States.WAITING_FOR_DATA,
+		conditions=['has_next_track'],
+		unless=['is_next_flac_available'],
+		before=['next_track']
+	)
+	machine.add_transition(
+		Triggers.NEXT,
 		States.WAITING_FOR_DATA,
 		States.WAITING_FOR_DATA,
 		conditions=['has_next_track'],
@@ -331,19 +339,17 @@ def create_player(
 		States.WAITING_FOR_DATA,
 		States.WAITING_FOR_DATA,
 		conditions=['has_prev_track'],
-		unless=['is_next_flac_available'],
+		unless=['is_prev_flac_available'],
 		before=['prev_track']
 	)
 
 	#
 	# Ripper interaction
 	machine.add_transition(
-		Triggers.RIPPER_TICK,
-		States.WAITING_FOR_DATA,
-		States.PLAYING,
-		conditions='is_flac_available',
-		prepare='update_track_list',
-		before='start_playback'
+		Triggers.RIPPER_UPDATE,
+		[States.PLAYING, States.STOPPED, States.PAUSED, States.WAITING_FOR_DATA],
+		'=',
+		before='update_track_list'
 	)
 
 	#

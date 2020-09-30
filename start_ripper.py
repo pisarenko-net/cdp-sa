@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from hifi_appliance.commander import Commander
+from hifi_appliance.ripping import Ripping
 
 
 daemon_config = namedtuple(
@@ -14,4 +14,4 @@ daemon_config.pid_file = '/home/sergey/playback.pid'
 daemon_config.log_file = '/home/sergey/playback.log'
 
 
-commander = Commander(daemon_config, debug=True)
+ripping = Ripping(daemon_config, debug=True)

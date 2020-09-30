@@ -1,7 +1,7 @@
 from collections import namedtuple
 import getpass
 
-from hifi_appliance.daemons import Daemon
+from hifi_appliance.daemons import CdpDaemon
 from hifi_appliance.message_bus import Receiver
 from hifi_appliance.message_bus import state as channel_state
 from hifi_appliance.message_bus import error as channel_error
@@ -10,7 +10,7 @@ from hifi_appliance.message_bus import command_playback as channel_command_playb
 from hifi_appliance.message_bus import command_minidisc as channel_command_minidisc
 
 
-class MessageMonitor(Daemon):
+class MessageMonitor(CdpDaemon):
     def __init__(self, daemon_config, debug = False):
         super(MessageMonitor, self).__init__(daemon_config, debug)
 
@@ -24,7 +24,7 @@ class MessageMonitor(Daemon):
             io_loop=self.io_loop,
             callbacks={
                 'playback': None,
-                'ripper': None
+                'ripping': None
             },
             fallback=self.create_callback('state')
         )
@@ -35,7 +35,7 @@ class MessageMonitor(Daemon):
             io_loop=self.io_loop,
             callbacks={
                 'playback': None,
-                'ripper': None
+                'ripping': None
             },
             fallback=self.create_callback('error')
         )

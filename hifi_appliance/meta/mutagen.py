@@ -22,3 +22,13 @@ class MutagenTagReader(object):
 		disc_meta['duration'] = sum(track['duration'] for track in disc_meta['tracks'])
 
 		return disc_meta
+
+
+def write_meta(track_filename, artist, title, album_title, track_number, total_tracks):
+	flac_data = mutagen.File(track_filename)
+	flac_data['title'] = title
+	flac_data['artist'] = artist
+	flac_data['album'] = album_title
+	flac_data['tracknumber'] = str(track_number)
+	flac_data['tracktotal'] = str(total_tracks)
+	flac_data.save()

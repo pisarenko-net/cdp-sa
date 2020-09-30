@@ -1,13 +1,13 @@
 import json
 import sys
 
-from .daemons import Daemon
+from .daemons import CdpDaemon
 from .message_bus import Receiver
 from .message_bus import state as channel_state
 from .state import PlayerStates
 
 
-class Display(Daemon):
+class Display(CdpDaemon):
     def __init__(self, daemon_config, debug=False):
         super(Display, self).__init__(daemon_config, debug)
 

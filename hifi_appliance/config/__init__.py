@@ -5,6 +5,8 @@ from .app import *
 from .cd import *
 from .db import *
 from .media import *
+from .ripper import *
+
 from ..constants import CONFIG_PATH_NAME
 
 
