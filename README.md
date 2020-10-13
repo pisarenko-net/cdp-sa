@@ -15,7 +15,7 @@ The goal is to build a custom Hi-Fi appliance in a ~~Sony~~custom chassis with a
  
 ## Installation
 
-Installation on an actual device/board is done through an automated script, see https://github.com/pisarenko-net/arch-bootstrap-scripts. The script take full care of dependencies and configuration.
+Installation on an actual device/board is done through an automated script, see https://github.com/pisarenko-net/arch-bootstrap-scripts. The script takes full care of dependencies and configuration.
 
 ## Major modules
 
