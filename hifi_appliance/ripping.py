@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 class RippingCommand(object):
     START = 'start'
+    KNOWN_DISC = 'known_disc'
+    STATE = 'state'
 
 
 class Ripping(CdpDaemon):
@@ -110,6 +112,9 @@ class Ripping(CdpDaemon):
         track_count = len(disc_meta['tracks'])
         self.state_machine.start(disc_meta)
         self.ripper_executor.submit(self.rip_disc, track_count)
+
+    def command_known_disc(self, args):
+        self.state_machine.known_disc()
 
     def command_state(self, args):
         self.send_current_state()

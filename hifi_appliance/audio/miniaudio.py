@@ -58,6 +58,7 @@ class MiniaudioSink(object):
     def _start_device(self):
         with miniaudio.PlaybackDevice(
             output_format=miniaudio.SampleFormat.SIGNED16,
+            backends=[miniaudio.Backend.PULSEAUDIO],
             nchannels=CHANNELS,
             sample_rate=SAMPLE_RATE) as device:
 

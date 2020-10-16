@@ -24,6 +24,7 @@ class PlaybackCommand(object):
     NEXT = 'next'
     PREV = 'prev'
     EJECT = 'eject'
+    STATE = 'state'
 
 
 class Playback(CdpDaemon):

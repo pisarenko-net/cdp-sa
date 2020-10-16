@@ -121,7 +121,10 @@ class Commander(CdpDaemon):
             json.dumps(disc_meta)
         )
 
-        self.ripper_command.send(RippingCommand.START, json.dumps(disc_meta))
+        if self.db.has_disc(disc_id):
+            self.ripper_command.send(RippingCommand.KNOWN_DISC)
+        else:
+            self.ripper_command.send(RippingCommand.START, json.dumps(disc_meta))
 
     def command_eject(self, args):
         self.playback_command.send(PlaybackCommand.EJECT)
@@ -146,6 +149,10 @@ class Commander(CdpDaemon):
 
     #
     # Debug commands
+
+    def command_state(self, args):
+        self.playback_command.send(PlaybackCommand.STATE)
+        self.ripper_command.send(RippingCommand.STATE)
 
     def command_db_rebuild(self, args):
         self.db.rebuild()
