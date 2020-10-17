@@ -48,12 +48,12 @@ class RipperNewDiscTestCase(unittest.TestCase):
 
     def test_machine_created(self):
         self.assertEqual(
-            self.ripper.state, RipperStates.IDLE,
-            'Ripper begins in IDLE state'
+            self.ripper.state, RipperStates.NO_DISC,
+            'Ripper begins in NO_DISC state'
         )
 
     def test_start_multi_cd(self):
-        self.assertEqual(self.ripper.state, RipperStates.IDLE)
+        self.assertEqual(self.ripper.state, RipperStates.NO_DISC)
         self.ripper.start(self.disc_meta)
 
         self.assertEqual(self.ripper.state, RipperStates.RIPPING)

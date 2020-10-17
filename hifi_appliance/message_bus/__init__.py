@@ -40,10 +40,3 @@ command_ripping = Queue(
     name='command_ripping',
     address='tcp://127.0.0.1:7963',
 )
-
-
-# Minidisc commands, to only be called by commander
-command_minidisc = Queue(
-    name='command_minidisc',
-    address='tcp://127.0.0.1:7952',
-)

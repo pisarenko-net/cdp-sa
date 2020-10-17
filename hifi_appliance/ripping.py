@@ -35,7 +35,7 @@ class Ripping(CdpDaemon):
             self.on_state_change
         )
 
-        self.ripper_executor = ThreadPoolExecutor(max_workers=1)
+        self.ripper_executor = None
 
         super(Ripping, self).__init__(daemon_config, debug)
 
@@ -49,7 +49,7 @@ class Ripping(CdpDaemon):
         self.command_receiver = self.setup_command_receiver(channel_command)
 
     def run(self):
-        # for i in range(30):
+        # for i in range(15):
         #     self.io_loop.add_timeout(time.time() + i, self.send_current_state)
 
         self.io_loop.start()
@@ -98,6 +98,10 @@ class Ripping(CdpDaemon):
     def write_disc_id(self, path, disc_id):
         path.write_text(disc_id)
 
+    def clean_up_on_fail(self):
+        pass
+        # TODO: delete the album folder
+
     #
     # State machine events
 
@@ -108,6 +112,7 @@ class Ripping(CdpDaemon):
     # Receive commands
 
     def command_start(self, args):
+        self.ripper_executor = ThreadPoolExecutor(max_workers=1)
         disc_meta = json.loads(args[0])
         track_count = len(disc_meta['tracks'])
         self.state_machine.start(disc_meta)
@@ -115,6 +120,12 @@ class Ripping(CdpDaemon):
 
     def command_known_disc(self, args):
         self.state_machine.known_disc()
+
+    def command_eject(self, args):
+        if self.ripper_executor:
+            self.ripper_executor.shutdown(wait=False)
+            self.ripper_executor = None
+        self.state_machine.eject()
 
     def command_state(self, args):
         self.send_current_state()

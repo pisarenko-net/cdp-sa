@@ -63,7 +63,7 @@ class Playback(CdpDaemon):
         self.state_machine.init()
 
     def run(self):
-        # for i in range(30):
+        # for i in range(15):
         #     self.io_loop.add_timeout(time.time() + i, self.send_current_state)
 
         self.io_loop.start()
@@ -120,6 +120,10 @@ class Playback(CdpDaemon):
     # Ripper updates
 
     def on_ripping_state(self, receiver, args):
+        if self.state_machine.state.value <= PlayerStates.UNKNOWN_DISC.value:
+            logger.debug('Received ripping update but in %s now' % self.state_machine.state)
+            return
+
         ripping_state = json.loads(args[1])
         self.state_machine.ripper_update(ripping_state['track_list'])
 
@@ -163,5 +167,3 @@ class Playback(CdpDaemon):
 
     def command_state(self, arg):
         self.send_current_state()
-
-# test case: next called when data is not available yet

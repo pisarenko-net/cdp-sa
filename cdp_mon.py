@@ -7,7 +7,6 @@ from hifi_appliance.message_bus import state as channel_state
 from hifi_appliance.message_bus import error as channel_error
 from hifi_appliance.message_bus import command as channel_command
 from hifi_appliance.message_bus import command_playback as channel_command_playback
-from hifi_appliance.message_bus import command_minidisc as channel_command_minidisc
 
 
 class MessageMonitor(CdpDaemon):
@@ -54,13 +53,6 @@ class MessageMonitor(CdpDaemon):
         #     io_loop=self.io_loop,
         #     callbacks={},
         #     fallback=self.create_callback('command_playback')
-        # )
-
-        # self.minidisc_receiver = Receiver(
-        #     channel_command_minidisc,
-        #     io_loop=self.io_loop,
-        #     callbacks={},
-        #     fallback=self.create_callback('command_minidisc')
         # )
 
     def run(self):

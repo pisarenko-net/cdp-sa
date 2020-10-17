@@ -10,7 +10,6 @@ from hifi_appliance.message_bus import error as channel_error
 from hifi_appliance.message_bus import command as channel_command
 from hifi_appliance.message_bus import command_playback as channel_command_playback
 from hifi_appliance.message_bus import command_ripping as channel_command_ripping
-from hifi_appliance.message_bus import command_minidisc as channel_command_minidisc
 
 
 CHANNELS = {
@@ -19,7 +18,6 @@ CHANNELS = {
     'command': None,
     'command_playback': None,
     'command_ripping': None,
-    'command_minidisc': None,
     'lirc': None
 }
 
@@ -46,7 +44,6 @@ def run_send_loop():
         'command': context.socket(zmq.PUSH),
         'command_playback': context.socket(zmq.PUSH),
         'command_ripping': context.socket(zmq.PUSH),
-        'command_minidisc': context.socket(zmq.PUSH)
     }
 
     channels['state'].bind(channel_state._pub_addresses[b'ctl'])
@@ -54,7 +51,6 @@ def run_send_loop():
     channels['command'].connect(channel_command._address)
     channels['command_playback'].connect(channel_command_playback._address)
     channels['command_ripping'].connect(channel_command_ripping._address)
-    channels['command_minidisc'].connect(channel_command_minidisc._address)
 
     while True:
         (channel, message) = COMMAND_QUEUE.get()
@@ -69,7 +65,7 @@ def simulate_lirc(key):
         return
 
     with lirc.CommandConnection() as conn:
-        lirc.SimulateCommand(conn, REMOTE_CONTROL, REMOTE_KEYS[key], 1, 9).run()
+        lirc.SimulateCommand(conn, REMOTE_CONTROL, REMOTE_KEYS[key], 0, 9).run()
 
 
 def main():

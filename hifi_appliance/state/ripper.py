@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class States(Enum):
-    IDLE = 0
-    KNOWN_DISC = 1
-    RIPPING = 2
-    DONE = 3
+    NO_DISC = 1
+    KNOWN_DISC = 2
+    RIPPING = 3
+    DONE = 4
 
 
 class Triggers(object):
@@ -170,14 +170,14 @@ def create_ripper(
         after_state_change_callback
     )
 
-    machine = Machine(ripper, states=States, initial=States.IDLE, after_state_change='on_state_change')
+    machine = Machine(ripper, states=States, initial=States.NO_DISC, after_state_change='on_state_change')
 
     # terminal state: disc already ripped
-    machine.add_transition(Triggers.KNOWN_DISC, States.IDLE, States.KNOWN_DISC)
+    machine.add_transition(Triggers.KNOWN_DISC, States.NO_DISC, States.KNOWN_DISC)
 
     machine.add_transition(
         Triggers.START,
-        States.IDLE,
+        States.NO_DISC,
         States.RIPPING,
         before=['set_disc_meta', 'create_folder']
     )
@@ -199,6 +199,6 @@ def create_ripper(
         before='store_disc_id'
     )
 
-    machine.add_transition(Triggers.EJECT, '*', States.IDLE, before='_clear_internal_state')
+    machine.add_transition(Triggers.EJECT, '*', States.NO_DISC, before='_clear_internal_state')
 
     return ripper

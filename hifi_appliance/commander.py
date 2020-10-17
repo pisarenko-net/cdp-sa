@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 
 from . import db as track_db
@@ -21,6 +22,15 @@ from .state import RipperStates
 
 
 logger = logging.getLogger(__name__)
+
+
+class CdpCommand(object):
+    PLAY = 'play'
+    STOP = 'stop'
+    PAUSE = 'pause'
+    NEXT = 'next'
+    PREV = 'prev'
+    EJECT = 'eject'
 
 
 class Commander(CdpDaemon):
@@ -64,7 +74,9 @@ class Commander(CdpDaemon):
         self.command_receiver = self.setup_command_receiver(channel_command)
 
     def run(self):
-        # for i in range(30):
+        self.command_state(None)
+
+        # for i in range(15):
         #     self.io_loop.add_timeout(time.time() + i, self.send_current_state)
 
         self.io_loop.start()
@@ -128,24 +140,42 @@ class Commander(CdpDaemon):
 
     def command_eject(self, args):
         self.playback_command.send(PlaybackCommand.EJECT)
+        self.ripper_command.send(PlaybackCommand.EJECT)
+        os.system('eject -T')
+
 
     #
     # Playback commands
 
     def command_play(self, args):
-        self.playback_command.send(PlaybackCommand.PLAY)
+        if self.playback_state.value > PlayerStates.UNKNOWN_DISC.value:
+            self.playback_command.send(PlaybackCommand.PLAY)
+        else:
+            logger.debug('Received PLAY but player is in %s' % self.playback_state)
 
     def command_stop(self, args):
-        self.playback_command.send(PlaybackCommand.STOP)
+        if self.playback_state.value > PlayerStates.UNKNOWN_DISC.value:
+            self.playback_command.send(PlaybackCommand.STOP)
+        else:
+            logger.debug('Received STOP but player is in %s' % self.playback_state)
 
     def command_pause(self, args):
-        self.playback_command.send(PlaybackCommand.PAUSE)
+        if self.playback_state.value > PlayerStates.UNKNOWN_DISC.value:
+            self.playback_command.send(PlaybackCommand.PAUSE)
+        else:
+            logger.debug('Received PAUSE but player is in %s' % self.playback_state)
 
     def command_next(self, args):
-        self.playback_command.send(PlaybackCommand.NEXT)
+        if self.playback_state.value > PlayerStates.UNKNOWN_DISC.value:
+            self.playback_command.send(PlaybackCommand.NEXT)
+        else:
+            logger.debug('Received NEXT but player is in %s' % self.playback_state)
 
     def command_prev(self, args):
-        self.playback_command.send(PlaybackCommand.PREV)
+        if self.playback_state.value > PlayerStates.UNKNOWN_DISC.value:
+            self.playback_command.send(PlaybackCommand.PREV)
+        else:
+            logger.debug('Received PREV but player is in %s' % self.playback_state)
 
     #
     # Debug commands
