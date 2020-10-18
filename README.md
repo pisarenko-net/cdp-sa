@@ -26,7 +26,7 @@ Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUS
  - commander -- accepts commands and decides whether to forward them depending on the state of other modules
  - display -- displays the most relevant information based on overall state
  - hci -- receives hardware interactions and turns them into commands
- - remote_control -- receives infrared signals and turns them into commands
+ - remote_control -- receives lirc commands and translates them into cdp-sa commands
  - ~~md\_search -- keeps looking for queued playlists to download to NetMD~~ (Minidisc support is coming later)
  - ~~md\_selector -- chooses a playlist to download given what's in the queue~~
  - ~~md\_download -- downloads tracks to the NetMD device~~
