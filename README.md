@@ -33,14 +33,22 @@ Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUS
 
 ## Dependencies
 
+For a full extensive list of dependencies refer to the unattended setup script https://github.com/pisarenko-net/arch-bootstrap-scripts/blob/master/cdpsa/stage1.sh
+
  - zmq
- - python-daemon
+ - daemon
  - tornado
- - pytransitions
+ - transitions
  - musicbrainzngs
  - mutagen
  - pyyaml
- - pyringbuffer
+ - ringbuf
+ - filelock
+ - pickledb
+ - discid
+ - coolname
+ - retrying
+ - miniaudio
 
 ## Attribution
 
