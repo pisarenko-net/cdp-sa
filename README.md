@@ -22,14 +22,14 @@ Installation on an actual device/board is done through an automated script, see 
 Modules interact with each other via ZMQ PUB/SUB "topics" (many-to-many) and PUSH/PULL "queues" (many-to-one). There are two topics: `state` (state updates for all modules) and `error` (errors displayed to the user). There is one `command` queue for all control input.
 
  - playback -- controls playback and CD state transitions
- - ripper -- controls ripping process and its state transitions
+ - ripping -- controls ripping process and its state transitions
  - commander -- accepts commands and decides whether to forward them depending on the state of other modules
  - display -- displays the most relevant information based on overall state
  - hci -- receives hardware interactions and turns them into commands
- - lirc -- receives infrared signals and turns them into commands
- - md\_search -- keeps looking for queued playlists to download to NetMD
- - md\_selector -- chooses a playlist to download given what's in the queue
- - md\_download -- downloads tracks to the NetMD device
+ - remote_control -- receives infrared signals and turns them into commands
+ - ~~md\_search -- keeps looking for queued playlists to download to NetMD~~ (Minidisc support is coming later)
+ - ~~md\_selector -- chooses a playlist to download given what's in the queue~~
+ - ~~md\_download -- downloads tracks to the NetMD device~~
 
 ## Dependencies
 
