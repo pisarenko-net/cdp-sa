@@ -1,6 +1,7 @@
 import grp
 import logging
 import os
+import pathlib
 import pwd
 import sys
 import threading
@@ -73,6 +74,8 @@ class CdpDaemon(object):
                 self._gid = gr.gr_gid
             except KeyError:
                 raise DaemonError('unknown group: {0}'.format(cfg.user))
+
+        self.create_pid_directory(cfg.pid_file)
 
         # Now kick off the daemon
 
@@ -212,6 +215,11 @@ class CdpDaemon(object):
 
     def handle_unknown_command(self, receiver, msg_parts):
         logger.error('Unknown command received %s', msg_parts)
+
+    def create_pid_directory(self, pid_file_path):
+        directory = pathlib.Path(pid_file_path).parents[0]
+        if not directory.exists():
+            directory.mkdir(parents=True)
 
 
 class DaemonIOLoop(IOLoop):
