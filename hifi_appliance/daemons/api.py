@@ -3,6 +3,7 @@ import logging
 import os
 import pathlib
 import pwd
+import shutil
 import sys
 import threading
 import time
@@ -75,8 +76,6 @@ class CdpDaemon(object):
             except KeyError:
                 raise DaemonError('unknown group: {0}'.format(cfg.user))
 
-        self.create_pid_directory(cfg.pid_file)
-
         # Now kick off the daemon
 
         self.log('-' * 60)
@@ -90,6 +89,8 @@ class CdpDaemon(object):
             self.run()
 
         else:
+            self.create_pid_directory(cfg.pid_file)
+
             # Fail early if daemon appear to be locked
             pid_lock = PIDLockFile(path = cfg.pid_file, timeout = 0)
             if pid_lock.is_locked():
@@ -220,6 +221,8 @@ class CdpDaemon(object):
         directory = pathlib.Path(pid_file_path).parents[0]
         if not directory.exists():
             directory.mkdir(parents=True)
+            directory.chmod(0o775)
+            shutil.chown(str(directory), user=self._daemon_config.user, group=self._daemon_config.group)
 
 
 class DaemonIOLoop(IOLoop):
